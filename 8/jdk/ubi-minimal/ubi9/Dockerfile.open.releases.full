@@ -22,33 +22,33 @@ RUN microdnf install -y tzdata openssl ca-certificates fontconfig glibc-langpack
 
 LABEL name="IBM Semeru Runtime Open Edition" \
       vendor="International Business Machines Corporation" \
-      version="jdk8u442-b06_openj9-0.49.0" \
+      version="jdk8u452-b09_openj9-0.51.0" \
       release="8" \
       maintainer="jayasg12@in.ibm.com" \
       run="docker run --rm -ti <image_name:tag> /bin/bash" \
       summary="IBM Semeru Runtime Docker Image for OpenJDK with openj9 and ubi-minimal" \
       description="For more information on this image please see https://github.com/ibmruntimes/semeru-containers/blob/master/README.md"
 
-ENV JAVA_VERSION jdk8u442-b06_openj9-0.49.0
+ENV JAVA_VERSION jdk8u452-b09_openj9-0.51.0
 
 RUN set -eux; \
     ARCH="$(uname -m)"; \
     case "${ARCH}" in \
        aarch64|arm64) \
-         ESUM='619dca885ed8e86ea5ce0c64c4242c4fba3846117304b88c7aa54363c148d2e7'; \
-         BINARY_URL='https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk8u442-b06_openj9-0.49.0/ibm-semeru-open-jdk_aarch64_linux_8u442b06_openj9-0.49.0.tar.gz'; \
+         ESUM='63440d5653d1f0918e4b4f6899330285ff039602665297c0e0720ac582f81864'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk8u452-b09_openj9-0.51.0/ibm-semeru-open-jdk_aarch64_linux_8u452b09_openj9-0.51.0.tar.gz'; \
          ;; \
        ppc64el|ppc64le) \
-         ESUM='155ea4b99fedec6a38dfaf7825ecf7275f0a13f6a80f7169d6bff70ce72493b1'; \
-         BINARY_URL='https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk8u442-b06_openj9-0.49.0/ibm-semeru-open-jdk_ppc64le_linux_8u442b06_openj9-0.49.0.tar.gz'; \
+         ESUM='87fabcc61f08710c4e2f644b09632d29a48cb23e41c54a82bfd6e1d38b867229'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk8u452-b09_openj9-0.51.0/ibm-semeru-open-jdk_ppc64le_linux_8u452b09_openj9-0.51.0.tar.gz'; \
          ;; \
        amd64|x86_64) \
-         ESUM='a6be6d9b7adf04d46448356e88128fe8c634215ff7816e023e7e94c98c35b763'; \
-         BINARY_URL='https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk8u442-b06_openj9-0.49.0/ibm-semeru-open-jdk_x64_linux_8u442b06_openj9-0.49.0.tar.gz'; \
+         ESUM='1049c6fc42d2d590981c4932a82e985b279c450eabc37bb13415b346a4ebad11'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk8u452-b09_openj9-0.51.0/ibm-semeru-open-jdk_x64_linux_8u452b09_openj9-0.51.0.tar.gz'; \
          ;; \
        s390x) \
-         ESUM='f516bac072670a6bffb18ddf4cc6bfd4736dff830bfd545f27744409f3702dbc'; \
-         BINARY_URL='https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk8u442-b06_openj9-0.49.0/ibm-semeru-open-jdk_s390x_linux_8u442b06_openj9-0.49.0.tar.gz'; \
+         ESUM='9392b88b4abc7843e903cbebd86854bebcefee262140c31f8b5ffd9e9443fe6d'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk8u452-b09_openj9-0.51.0/ibm-semeru-open-jdk_s390x_linux_8u452b09_openj9-0.51.0.tar.gz'; \
          ;; \
        *) \
          echo "Unsupported arch: ${ARCH}"; \

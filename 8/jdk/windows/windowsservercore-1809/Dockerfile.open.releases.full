@@ -18,10 +18,10 @@ FROM mcr.microsoft.com/windows/servercore:1809
 # $ProgressPreference: https://github.com/PowerShell/PowerShell/issues/2138#issuecomment-251261324
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 
-ENV JAVA_VERSION jdk8u302-b08_openj9-0.27.0
+ENV JAVA_VERSION jdk8u452-b09_openj9-0.51.0
 
-RUN Write-Host ('Downloading https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk8u302-b08_openj9-0.27.0/ibm-semeru-open-jdk_x64_windows_8u302b08_openj9-0.27.0.msi ...'); \
-    curl.exe -LfsSo openjdk.msi https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk8u302-b08_openj9-0.27.0/ibm-semeru-open-jdk_x64_windows_8u302b08_openj9-0.27.0.msi ; \
+RUN Write-Host ('Downloading https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk8u452-b09_openj9-0.51.0/ibm-semeru-open-jdk_x64_windows_8u302b08_openj9-0.27.0.msi ...'); \
+    curl.exe -LfsSo openjdk.msi https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk8u452-b09_openj9-0.51.0/ibm-semeru-open-jdk_x64_windows_8u302b08_openj9-0.27.0.msi ; \
     Write-Host ('Verifying sha256 (5655e3236e9be8db8239265d8fc2a26746b00d9a0739dd926be341f3e25859fc) ...'); \
     if ((Get-FileHash openjdk.msi -Algorithm sha256).Hash -ne '5655e3236e9be8db8239265d8fc2a26746b00d9a0739dd926be341f3e25859fc') { \
             Write-Host 'FAILED!'; \

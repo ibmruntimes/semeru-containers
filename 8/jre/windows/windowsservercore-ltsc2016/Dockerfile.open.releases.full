@@ -18,10 +18,10 @@ FROM mcr.microsoft.com/windows/servercore:ltsc2016
 # $ProgressPreference: https://github.com/PowerShell/PowerShell/issues/2138#issuecomment-251261324
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 
-ENV JAVA_VERSION jdk8u302-b08_openj9-0.27.0
+ENV JAVA_VERSION jdk8u452-b09_openj9-0.51.0
 
-RUN Write-Host ('Downloading https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk8u302-b08_openj9-0.27.0/ibm-semeru-open-jre_x64_windows_8u302b08_openj9-0.27.0.msi ...'); \
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest -Uri https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk8u302-b08_openj9-0.27.0/ibm-semeru-open-jre_x64_windows_8u302b08_openj9-0.27.0.msi -O 'openjdk.msi' ; \
+RUN Write-Host ('Downloading https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk8u452-b09_openj9-0.51.0/ibm-semeru-open-jre_x64_windows_8u302b08_openj9-0.27.0.msi ...'); \
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest -Uri https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk8u452-b09_openj9-0.51.0/ibm-semeru-open-jre_x64_windows_8u302b08_openj9-0.27.0.msi -O 'openjdk.msi' ; \
     Write-Host ('Verifying sha256 (1e146a80bc3c0ec2c90afbbc6b9d4b58986e0f36a1af3adfebffb61d8dd2e45c) ...'); \
     if ((Get-FileHash openjdk.msi -Algorithm sha256).Hash -ne '1e146a80bc3c0ec2c90afbbc6b9d4b58986e0f36a1af3adfebffb61d8dd2e45c') { \
             Write-Host 'FAILED!'; \
