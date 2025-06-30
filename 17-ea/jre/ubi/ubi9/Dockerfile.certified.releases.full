@@ -1,0 +1,191 @@
+# (C) Copyright IBM Corporation 2021, 2025
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+FROM registry.access.redhat.com/ubi9/ubi:latest AS base-image
+
+ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
+
+RUN dnf install -y \
+    # CRIU dependencies
+        iptables-libs iptables jansson libibverbs libmnl libnet libnftnl libpcap nftables protobuf-c \
+    # Semeru dependencies
+        tzdata openssl ca-certificates fontconfig glibc-langpack-en gzip tar \
+    && dnf update -y && dnf clean all;
+
+LABEL name="IBM Semeru Runtime Certified Edition" \
+      vendor="International Business Machines Corporation" \
+      version="17.0.15.0.EA" \
+      release="17" \
+      maintainer="jayasg12@in.ibm.com" \
+      run="docker run --rm -ti <image_name:tag> /bin/bash" \
+      summary="IBM Semeru Runtime Certified Docker Image for OpenJDK with openj9 and ubi" \
+      description="For more information on this image please see https://github.com/ibmruntimes/semeru-containers/blob/master/README.md"
+
+# Install CRIU
+RUN --mount=type=secret,id=criu_secrets source /run/secrets/criu_secrets; \
+    set -eux; \
+    ARCH="$(uname -m)"; \
+    case "${ARCH}" in \
+      amd64|x86_64|ppc64el|ppc64le|s390x|aarch64|arm64) \
+        case "${ARCH}" in \
+        amd64|x86_64) \
+          CRIU_URL='https://na.artifactory.swg-devops.com/artifactory/hyc-rt-java-delivery-generic-local/IBM/java/criu_build/48/x64_linux/ubi9/criu.tar.gz'; \
+          CRIU_SHA_URL='https://na.artifactory.swg-devops.com/artifactory/hyc-rt-java-delivery-generic-local/IBM/java/criu_build/48/x64_linux/ubi9/criu.tar.gz.sha256.txt'; \
+          ;; \
+        ppc64el|ppc64le) \
+          CRIU_URL='https://na.artifactory.swg-devops.com/artifactory/hyc-rt-java-delivery-generic-local/IBM/java/criu_build/48/ppc64le_linux/ubi9/criu.tar.gz'; \
+          CRIU_SHA_URL='https://na.artifactory.swg-devops.com/artifactory/hyc-rt-java-delivery-generic-local/IBM/java/criu_build/48/ppc64le_linux/ubi9/criu.tar.gz.sha256.txt'; \
+          ;; \
+        s390x) \
+          CRIU_URL='https://na.artifactory.swg-devops.com/artifactory/hyc-rt-java-delivery-generic-local/IBM/java/criu_build/48/s390x_linux/ubi9/criu.tar.gz'; \
+          CRIU_SHA_URL='https://na.artifactory.swg-devops.com/artifactory/hyc-rt-java-delivery-generic-local/IBM/java/criu_build/48/s390x_linux/ubi9/criu.tar.gz.sha256.txt'; \
+          ;; \
+        aarch64) \
+          CRIU_URL='https://na.artifactory.swg-devops.com/artifactory/hyc-rt-java-delivery-generic-local/IBM/java/criu_build/48/aarch64_linux/ubi9/criu.tar.gz'; \
+          CRIU_SHA_URL='https://na.artifactory.swg-devops.com/artifactory/hyc-rt-java-delivery-generic-local/IBM/java/criu_build/48/aarch64_linux/ubi9/criu.tar.gz.sha256.txt'; \
+          ;; \
+        *) \
+          echo "CRIU is not supported on: ${ARCH}"; \
+          ;; \
+        esac; \
+        cd /tmp; \
+        curl -H "${CRIU_AUTH_HEADER}" -LfsSo criu.tar.gz ${CRIU_URL}; \
+        curl -H "${CRIU_AUTH_HEADER}" -LfsSo criu.tar.gz.sha256.txt ${CRIU_SHA_URL}; \
+        sha256sum -c criu.tar.gz.sha256.txt; \
+        tar -xzf criu.tar.gz --strip-components=1; \
+        cp -R usr/local /usr; \
+        echo /usr/local/lib64 > /etc/ld.so.conf.d/criu.conf; \
+        ldconfig; \
+        setcap cap_checkpoint_restore,cap_sys_ptrace,cap_setpcap=eip /usr/local/sbin/criu; \
+        mkdir -p /opt/criu; \
+        cp /usr/local/sbin/criu /opt/criu/criu; \
+        setcap cap_checkpoint_restore,cap_setpcap=eip /opt/criu/criu; \
+        rm -fr criu criu.tar.gz; \
+        ;; \
+      *) \
+        echo "CRIU is not supported on: ${ARCH}"; \
+        ;; \
+    esac;
+
+ENV PATH="/usr/local/sbin:$PATH"
+
+ENV JAVA_VERSION 17.0.15.0.EA
+
+RUN set -eux; \
+    ARCH="$(uname -m)"; \
+    case "${ARCH}" in \
+       aarch64|arm64) \
+         ESUM='c1529e9cd478311ea2745b99ab78ac8eea6a292058cd11e66f640e8b9ec2c06f'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru17-certified-binaries/releases/download/jdk-17.0.15%2B6_openj9-0.51.0/ibm-semeru-certified-jre_aarch64_linux_17.0.15.0.tar.gz'; \
+         ;; \
+       amd64|x86_64) \
+         ESUM='6ee8297ba5030ebdc396b34b7c9967bf5615c9e558460fd427aef496da034503'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru17-certified-binaries/releases/download/jdk-17.0.15%2B6_openj9-0.51.0/ibm-semeru-certified-jre_x64_linux_17.0.15.0.tar.gz'; \
+         ;; \
+       ppc64el|ppc64le) \
+         ESUM='e990b1e778e08b98fdbf8e600056a3f5f2511986b0578abce41238ca7265e50c'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru17-certified-binaries/releases/download/jdk-17.0.15%2B6_openj9-0.51.0/ibm-semeru-certified-jre_ppc64le_linux_17.0.15.0.tar.gz'; \
+         ;; \
+       s390x) \
+         ESUM='3f5b4a879a560b5bc048ab8481d56510736da88d293c56af90d96f4b1fc890ff'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru17-certified-binaries/releases/download/jdk-17.0.15%2B6_openj9-0.51.0/ibm-semeru-certified-jre_s390x_linux_17.0.15.0.tar.gz'; \
+         ;; \
+       *) \
+         echo "Unsupported arch: ${ARCH}"; \
+         exit 1; \
+         ;; \
+    esac; \
+    curl -LfsSo /tmp/openjdk.tar.gz ${BINARY_URL}; \
+    echo "${ESUM} */tmp/openjdk.tar.gz" | sha256sum -c -; \
+    mkdir -p /opt/ibm/; \
+    cd /opt/ibm/; \
+    tar -xf /tmp/openjdk.tar.gz ; \
+    mkdir -p /licenses; \
+    mv /opt/ibm/jdk-17* /opt/ibm/java; \
+    cp /opt/ibm/java/legal/java.base/license/license_en.txt /licenses; \
+    rm -rf /tmp/openjdk.tar.gz;
+
+ENV JAVA_HOME=/opt/ibm/java \
+    PATH="/opt/ibm/java/bin:$PATH"
+ENV JAVA_TOOL_OPTIONS="-XX:+IgnoreUnrecognizedVMOptions -XX:+PortableSharedCache -XX:+IdleTuningGcOnIdle -Xshareclasses:name=openj9_system_scc,cacheDir=/opt/java/.scc,readonly,nonFatal"
+
+# Create OpenJ9 SharedClassCache (SCC) for bootclasses to improve the java startup.
+# Downloads and runs tomcat to generate SCC for bootclasses at /opt/java/.scc/openj9_system_scc
+# Does a dry-run and calculates the optimal cache size and recreates the cache with the appropriate size.
+# With SCC, OpenJ9 startup is improved ~50% with an increase in image size of ~14MB
+# Application classes can be create a separate cache layer with this as the base for further startup improvement
+
+RUN set -eux; \
+    unset OPENJ9_JAVA_OPTIONS; \
+    SCC_SIZE="50m"; \
+    DOWNLOAD_PATH_TOMCAT=/tmp/tomcat; \
+    INSTALL_PATH_TOMCAT=/opt/tomcat-home; \
+    TOMCAT_CHECKSUM="cbe407f17c813d9f83cab459e603df171f2e5782c3a0cdb4cfa00b0391a89cedf865c6d8972fc7e12210c69a8467ede5939f35bb0f3b41fa173b9ee83199768a"; \
+    TOMCAT_DWNLD_URL="https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.102/bin/apache-tomcat-9.0.102.tar.gz"; \
+    \
+    mkdir -p "${DOWNLOAD_PATH_TOMCAT}" "${INSTALL_PATH_TOMCAT}"; \
+    curl -LfsSo "${DOWNLOAD_PATH_TOMCAT}"/tomcat.tar.gz "${TOMCAT_DWNLD_URL}"; \
+    echo "${TOMCAT_CHECKSUM} *${DOWNLOAD_PATH_TOMCAT}/tomcat.tar.gz" | sha512sum -c -; \
+    tar -xf "${DOWNLOAD_PATH_TOMCAT}"/tomcat.tar.gz -C "${INSTALL_PATH_TOMCAT}" --strip-components=1; \
+    rm -rf "${DOWNLOAD_PATH_TOMCAT}"; \
+    \
+    java -Xshareclasses:name=dry_run_scc,cacheDir=/opt/java/.scc,bootClassesOnly,nonFatal,createLayer -Xscmx$SCC_SIZE -version; \
+    export OPENJ9_JAVA_OPTIONS="-XX:+IProfileDuringStartupPhase -Xshareclasses:name=dry_run_scc,cacheDir=/opt/java/.scc,bootClassesOnly,nonFatal"; \
+    "${INSTALL_PATH_TOMCAT}"/bin/startup.sh; \
+    sleep 5; \
+    "${INSTALL_PATH_TOMCAT}"/bin/shutdown.sh -force; \
+    sleep 15; \
+    FULL=$( (java -Xshareclasses:name=dry_run_scc,cacheDir=/opt/java/.scc,printallStats 2>&1 || true) | awk '/^Cache is [0-9.]*% .*full/ {print substr($3, 1, length($3)-1)}'); \
+    DST_CACHE=$(java -Xshareclasses:name=dry_run_scc,cacheDir=/opt/java/.scc,destroy 2>&1 || true); \
+    SCC_SIZE=$(echo $SCC_SIZE | sed 's/.$//'); \
+    SCC_SIZE=$(awk "BEGIN {print int($SCC_SIZE * $FULL / 100.0)}"); \
+    [ "${SCC_SIZE}" -eq 0 ] && SCC_SIZE=1; \
+    SCC_SIZE="${SCC_SIZE}m"; \
+    java -Xshareclasses:name=openj9_system_scc,cacheDir=/opt/java/.scc,bootClassesOnly,nonFatal,createLayer -Xscmx$SCC_SIZE -version; \
+    unset OPENJ9_JAVA_OPTIONS; \
+    \
+    export OPENJ9_JAVA_OPTIONS="-XX:+IProfileDuringStartupPhase -Xshareclasses:name=openj9_system_scc,cacheDir=/opt/java/.scc,bootClassesOnly,nonFatal"; \
+    "${INSTALL_PATH_TOMCAT}"/bin/startup.sh; \
+    sleep 5; \
+    "${INSTALL_PATH_TOMCAT}"/bin/shutdown.sh -force; \
+    sleep 5; \
+    FULL=$( (java -Xshareclasses:name=openj9_system_scc,cacheDir=/opt/java/.scc,printallStats 2>&1 || true) | awk '/^Cache is [0-9.]*% .*full/ {print substr($3, 1, length($3)-1)}'); \
+    echo "SCC layer is $FULL% full."; \
+    rm -rf "${INSTALL_PATH_TOMCAT}"; \
+    if [ -d "/opt/java/.scc" ]; then \
+          chmod -R 0777 /opt/java/.scc; \
+    fi; \
+    \
+    echo "SCC generation phase completed";
+
+FROM base-image AS instanton-ldconfig
+
+# For InstantOn, generate instanton.ld.so.cache which excludes glibc-hwcaps directories.
+# This is done in an intermediate stage to avoid modifying the base image.
+# ldconfig output example lines:
+#         libcap-ng.so.0 (libc6,64bit) => /lib64/libcap-ng.so.0
+#         libc_malloc_debug.so.0 (libc6,64bit, OS ABI: Linux 3.10.0) => /lib64/libc_malloc_debug.so.0
+#         libc.so.6 (libc6,64bit, hwcap: "power10", OS ABI: Linux 3.10.0) => /lib64/glibc-hwcaps/power10/libc.so.6
+# sed regexp filter should pass any line that looks as follows: ... => /.../glibc-hwcaps/...
+RUN glibc_hwcaps_dirs=$(ldconfig --print-cache | sed --regexp-extended --silent 's,^.+[[:space:]]+=>[[:space:]]+(/.+/glibc-hwcaps)/.+$,\1,p' | sort | uniq) \
+    && for d in $glibc_hwcaps_dirs; do rm -rf $d; done \
+    && ldconfig
+
+FROM base-image
+
+COPY --from=instanton-ldconfig /etc/ld.so.cache /etc/instanton.ld.so.cache
+
+CMD ["jshell"]
+USER 1001
