@@ -20,7 +20,7 @@ ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
 RUN yum install -y tzdata openssl curl ca-certificates fontconfig gzip tar \
     && yum clean all
 
-ENV JAVA_VERSION jdk-21.0.9+10_openj9-0.56.0
+ENV JAVA_VERSION jdk-21.0.10+7_openj9-0.57.0
 
 RUN set -eux; \
     ARCH="$(uname -m)"; \

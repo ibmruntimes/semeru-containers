@@ -23,7 +23,7 @@ RUN apt-get update \
     && locale-gen en_US.UTF-8 \
     && rm -rf /var/lib/apt/lists/*
 
-ENV JAVA_VERSION jdk-21.0.9+10_openj9-0.56.0
+ENV JAVA_VERSION jdk-21.0.10+7_openj9-0.57.0
 
 RUN set -eux; \
     ARCH="$(dpkg --print-architecture)"; \
