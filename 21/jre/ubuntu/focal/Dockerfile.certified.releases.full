@@ -23,26 +23,26 @@ RUN apt-get update \
     && locale-gen en_US.UTF-8 \
     && rm -rf /var/lib/apt/lists/*
 
-ENV JAVA_VERSION 21.0.9.0
+ENV JAVA_VERSION 21.0.10.0
 
 RUN set -eux; \
     ARCH="$(dpkg --print-architecture)"; \
     case "${ARCH}" in \
        aarch64|arm64) \
-         ESUM='36f3bc4f207b49ff1f345fac6e13aea5815fd89ac31d91d51961bc9dad587edf'; \
-         BINARY_URL='https://github.com/ibmruntimes/semeru21-certified-binaries/releases/download/jdk-21.0.9%2B10_openj9-0.56.0/ibm-semeru-certified-jre_aarch64_linux_21.0.9.0.tar.gz'; \
+         ESUM='2d23e791f70c2988146ec98944fe091e4c1485aefd1073a26d5d8f6f24b1b727'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru21-certified-binaries/releases/download/jdk-21.0.10%2B7_openj9-0.57.0/ibm-semeru-certified-jre_aarch64_linux_21.0.10.0.tar.gz'; \
          ;; \
        amd64|x86_64) \
-         ESUM='e50c82cfa255c148792d05248d0dea39e95208cf07408546ca86ef5a96094bd8'; \
-         BINARY_URL='https://github.com/ibmruntimes/semeru21-certified-binaries/releases/download/jdk-21.0.9%2B10_openj9-0.56.0/ibm-semeru-certified-jre_x64_linux_21.0.9.0.tar.gz'; \
+         ESUM='9fb0f2e39c0792eb2189aa787cf971a5f349a6e5e9cd34aa162cb6dcdeaa875e'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru21-certified-binaries/releases/download/jdk-21.0.10%2B7_openj9-0.57.0/ibm-semeru-certified-jre_x64_linux_21.0.10.0.tar.gz'; \
          ;; \
        ppc64el|ppc64le) \
-         ESUM='7f17ed4985e12b95bfcd05be6de8fdb6360ba47e8a89e2dc502f4aad5cce92c3'; \
-         BINARY_URL='https://github.com/ibmruntimes/semeru21-certified-binaries/releases/download/jdk-21.0.9%2B10_openj9-0.56.0/ibm-semeru-certified-jre_ppc64le_linux_21.0.9.0.tar.gz'; \
+         ESUM='987251c10f4d30cbd3091cf5bc43c8002fa0207ef25aeed09e78e822744af27c'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru21-certified-binaries/releases/download/jdk-21.0.10%2B7_openj9-0.57.0/ibm-semeru-certified-jre_ppc64le_linux_21.0.10.0.tar.gz'; \
          ;; \
        s390x) \
-         ESUM='e029cba136aa3fe3f9a0a8d7c404ac13e8f2cf2503da96d6c28d2d56ff0ceaf4'; \
-         BINARY_URL='https://github.com/ibmruntimes/semeru21-certified-binaries/releases/download/jdk-21.0.9%2B10_openj9-0.56.0/ibm-semeru-certified-jre_s390x_linux_21.0.9.0.tar.gz'; \
+         ESUM='91e5e0c719c4f5de3571ebd19ad017b820aff00581d8b38de2d54badbea8f4c5'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru21-certified-binaries/releases/download/jdk-21.0.10%2B7_openj9-0.57.0/ibm-semeru-certified-jre_s390x_linux_21.0.10.0.tar.gz'; \
          ;; \
        *) \
          echo "Unsupported arch: ${ARCH}"; \
