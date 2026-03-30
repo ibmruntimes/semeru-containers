@@ -24,9 +24,6 @@ RUN dnf install -y \
         tzdata openssl ca-certificates fontconfig glibc-langpack-en gzip tar \
     && dnf update -y && dnf clean all;
 
-RUN dnf install -y tzdata openssl ca-certificates fontconfig glibc-langpack-en gzip tar \
-    && dnf update -y; dnf clean all
-
 LABEL name="IBM Semeru Runtime Open Edition" \
       vendor="International Business Machines Corporation" \
       version="jdk-11.0.30+7.1_openj9-0.57.0" \
