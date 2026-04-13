@@ -93,3 +93,19 @@ RUN python3 -m pip install --upgrade pip setuptools && \
     tar -czf criu.tar.gz criu && \
     sha256sum criu.tar.gz > criu.tar.gz.sha256.txt && \
     rm -rf criu-build
+
+RUN set -e \
+    && cd /tmp \
+    && python3 -m pip install --upgrade pip setuptools \
+    && git config --global user.email "$(hostname)@$(hostname).com" \
+    && git clone -b ${CRIU_BRANCH} ${CRIU_REPO} \
+    && mv criu criu-build \
+    && cd criu-build && \
+    if [ "x${CRIU_SHA}" != x ] ; then \
+        git reset --hard ${CRIU_SHA} \
+    fi \
+    && make DESTDIR=/tmp/criu PREFIX=/usr/local LIBDIR=/usr/local/lib64 install-lib install-criu \
+    && cd ../ \
+    && tar -czf criu.tar.gz criu \
+    && sha256sum criu.tar.gz > criu.tar.gz.sha256.txt \
+    && rm -rf criu-build

@@ -75,15 +75,16 @@ RUN zypper update -y && \
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 100 \
     && update-alternatives --set python3 /usr/bin/python3.11
 
-RUN cd /tmp; \
-    git clone -b ${CRIU_BRANCH} ${CRIU_REPO}; \
-    mv criu criu-build; \
-    cd criu-build; \
+RUN set -e \
+    && cd /tmp \
+    && git clone -b ${CRIU_BRANCH} ${CRIU_REPO} \
+    && mv criu criu-build \
+    && cd criu-build && \
     if [ "x${CRIU_SHA}" != x ] ; then \
-        git reset --hard ${CRIU_SHA}; \
-    fi; \
-    make CC=/usr/bin/gcc-13 DESTDIR=/tmp/criu PREFIX=/usr/local LIBDIR=/usr/local/lib64 install-lib install-criu; \
-    cd ../; \
-    tar -czf criu.tar.gz criu; \
-    sha256sum criu.tar.gz > criu.tar.gz.sha256.txt; \
-    rm -rf criu-build;
+        git reset --hard ${CRIU_SHA} \
+    fi \
+    && make CC=/usr/bin/gcc-13 DESTDIR=/tmp/criu PREFIX=/usr/local LIBDIR=/usr/local/lib64 install-lib install-criu \
+    && cd ../ \
+    && tar -czf criu.tar.gz criu \
+    && sha256sum criu.tar.gz > criu.tar.gz.sha256.txt \
+    && rm -rf criu-build
