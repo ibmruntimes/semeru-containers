@@ -40,7 +40,6 @@ RUN yum -y update && yum install -y \
     iptables-libs \
     jansson \
     kernel-devel \
-    libbsd-devel \
     libcap \
     libcap-devel \
     libibverbs \
