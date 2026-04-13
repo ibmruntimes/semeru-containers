@@ -87,6 +87,9 @@ RUN set -e \
     if [ "x${CRIU_SHA}" != x ] ; then \
         git reset --hard ${CRIU_SHA}; \
     fi; \
+    git remote add upstream https://github.com/checkpoint-restore/criu.git \
+    && git fetch upstream criu-dev \
+    && git cherry-pick d3dfb663b1022ec89431a0e61113f55a771bc73c \
     && make DESTDIR=/tmp/criu PREFIX=/usr/local LIBDIR=/usr/local/lib64 install-lib install-criu \
     && cd ../ \
     && tar -czf criu.tar.gz criu \

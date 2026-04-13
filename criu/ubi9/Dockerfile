@@ -51,6 +51,8 @@ RUN yum -y update && yum install -y \
     python3-protobuf \
     python3-pip \
     python3-future \
+    python3-setuptools \
+    python3-wheel \
     libnet-devel \
     nftables-devel \
     protobuf-devel \

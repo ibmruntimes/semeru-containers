@@ -51,6 +51,7 @@ RUN yum -y update && yum install -y \
     python3-protobuf \
     python3-pip \
     python3-future \
+    python3-wheel \
     libnet-devel \
     nftables-devel \
     protobuf-devel \
@@ -69,6 +70,7 @@ RUN yum -y update && yum install -y \
 
 RUN set -e \
     && cd /tmp \
+    && python3 -m pip install --upgrade pip \
     && git clone -b ${CRIU_BRANCH} ${CRIU_REPO} \
     && mv criu criu-build \
     && cd criu-build && \
