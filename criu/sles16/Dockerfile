@@ -77,23 +77,6 @@ RUN zypper --gpg-auto-import-keys refresh && \
     vim \
     xmlto
 
-RUN python3 -m pip install --upgrade pip setuptools && \
-    git config --global user.email "$(hostname)@$(hostname).com" && \
-    git clone -b ${CRIU_BRANCH} ${CRIU_REPO} && \
-    mv criu criu-build && \
-    cd criu-build && \
-    if [ "x${CRIU_SHA}" != x ] ; then \
-        git reset --hard ${CRIU_SHA}; \
-    fi; \
-    git remote add upstream https://github.com/checkpoint-restore/criu.git && \
-    git fetch upstream criu-dev && \
-    git cherry-pick d3dfb663b1022ec89431a0e61113f55a771bc73c && \
-    make DESTDIR=/tmp/criu PREFIX=/usr/local LIBDIR=/usr/local/lib64 install-lib install-criu && \
-    cd ../ && \
-    tar -czf criu.tar.gz criu && \
-    sha256sum criu.tar.gz > criu.tar.gz.sha256.txt && \
-    rm -rf criu-build
-
 RUN set -e \
     && cd /tmp \
     && python3 -m pip install --upgrade pip setuptools \
@@ -102,8 +85,8 @@ RUN set -e \
     && mv criu criu-build \
     && cd criu-build && \
     if [ "x${CRIU_SHA}" != x ] ; then \
-        git reset --hard ${CRIU_SHA} \
-    fi \
+        git reset --hard ${CRIU_SHA}; \
+    fi; \
     && make DESTDIR=/tmp/criu PREFIX=/usr/local LIBDIR=/usr/local/lib64 install-lib install-criu \
     && cd ../ \
     && tar -czf criu.tar.gz criu \
