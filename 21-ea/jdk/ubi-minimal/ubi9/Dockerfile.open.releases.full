@@ -40,20 +40,20 @@ RUN --mount=type=secret,id=criu_secrets source /run/secrets/criu_secrets; \
     ARCH="$(uname -m)"; \
     case "${ARCH}" in \
         amd64|x86_64) \
-          CRIU_URL='https://na.artifactory.swg-devops.com/artifactory/hyc-rt-java-delivery-generic-local/IBM/java/criu_build/59/x64_linux/ubi9/criu.tar.gz'; \
-          CRIU_SHA_URL='https://na.artifactory.swg-devops.com/artifactory/hyc-rt-java-delivery-generic-local/IBM/java/criu_build/59/x64_linux/ubi9/criu.tar.gz.sha256.txt'; \
+          CRIU_URL='https://na.artifactory.swg-devops.com/artifactory/hyc-rt-java-delivery-generic-local/IBM/java/criu_build/101/x64_linux/ubi9/criu.tar.gz'; \
+          CRIU_SHA_URL='https://na.artifactory.swg-devops.com/artifactory/hyc-rt-java-delivery-generic-local/IBM/java/criu_build/101/x64_linux/ubi9/criu.tar.gz.sha256.txt'; \
           ;; \
         ppc64el|ppc64le) \
-          CRIU_URL='https://na.artifactory.swg-devops.com/artifactory/hyc-rt-java-delivery-generic-local/IBM/java/criu_build/59/ppc64le_linux/ubi9/criu.tar.gz'; \
-          CRIU_SHA_URL='https://na.artifactory.swg-devops.com/artifactory/hyc-rt-java-delivery-generic-local/IBM/java/criu_build/59/ppc64le_linux/ubi9/criu.tar.gz.sha256.txt'; \
+          CRIU_URL='https://na.artifactory.swg-devops.com/artifactory/hyc-rt-java-delivery-generic-local/IBM/java/criu_build/101/ppc64le_linux/ubi9/criu.tar.gz'; \
+          CRIU_SHA_URL='https://na.artifactory.swg-devops.com/artifactory/hyc-rt-java-delivery-generic-local/IBM/java/criu_build/101/ppc64le_linux/ubi9/criu.tar.gz.sha256.txt'; \
           ;; \
         s390x) \
-          CRIU_URL='https://na.artifactory.swg-devops.com/artifactory/hyc-rt-java-delivery-generic-local/IBM/java/criu_build/59/s390x_linux/ubi9/criu.tar.gz'; \
-          CRIU_SHA_URL='https://na.artifactory.swg-devops.com/artifactory/hyc-rt-java-delivery-generic-local/IBM/java/criu_build/59/s390x_linux/ubi9/criu.tar.gz.sha256.txt'; \
+          CRIU_URL='https://na.artifactory.swg-devops.com/artifactory/hyc-rt-java-delivery-generic-local/IBM/java/criu_build/101/s390x_linux/ubi9/criu.tar.gz'; \
+          CRIU_SHA_URL='https://na.artifactory.swg-devops.com/artifactory/hyc-rt-java-delivery-generic-local/IBM/java/criu_build/101/s390x_linux/ubi9/criu.tar.gz.sha256.txt'; \
           ;; \
         aarch64) \
-          CRIU_URL='https://na.artifactory.swg-devops.com/artifactory/hyc-rt-java-delivery-generic-local/IBM/java/criu_build/59/aarch64_linux/ubi9/criu.tar.gz'; \
-          CRIU_SHA_URL='https://na.artifactory.swg-devops.com/artifactory/hyc-rt-java-delivery-generic-local/IBM/java/criu_build/59/aarch64_linux/ubi9/criu.tar.gz.sha256.txt'; \
+          CRIU_URL='https://na.artifactory.swg-devops.com/artifactory/hyc-rt-java-delivery-generic-local/IBM/java/criu_build/101/aarch64_linux/ubi9/criu.tar.gz'; \
+          CRIU_SHA_URL='https://na.artifactory.swg-devops.com/artifactory/hyc-rt-java-delivery-generic-local/IBM/java/criu_build/101/aarch64_linux/ubi9/criu.tar.gz.sha256.txt'; \
           ;; \
         *) \
           echo "Unsupported arch: ${ARCH}"; \
