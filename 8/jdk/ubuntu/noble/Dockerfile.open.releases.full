@@ -23,7 +23,7 @@ RUN apt-get update \
     && locale-gen en_US.UTF-8 \
     && rm -rf /var/lib/apt/lists/*
 
-ENV JAVA_VERSION jdk-8.0.492.0
+ENV JAVA_VERSION 8.0.492.0
 
 RUN set -eux; \
     ARCH="$(dpkg --print-architecture)"; \
