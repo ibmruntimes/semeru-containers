@@ -113,3 +113,15 @@ certified|25|jdk|aarch64|25.0.3.0|807abecc994dc21627c8633faba22107e8a0b6744dbc33
 certified|25|jdk|x64|25.0.3.0|1df868e6b905d8b5692e8c9962c5ab247183e097d5ac84697ea790d530aa1dc7|https://github.com/ibmruntimes/semeru25-certified-binaries/releases/download/jdk-25.0.3.0/ibm-semeru-certified-jdk_x64_linux_25.0.3.0.tar.gz
 certified|25|jdk|ppc64le|25.0.3.0|d8fb89024803d59df3e32e10075a41a15d703850e47e04fd19cbf95f6449c3c8|https://github.com/ibmruntimes/semeru25-certified-binaries/releases/download/jdk-25.0.3.0/ibm-semeru-certified-jdk_ppc64le_linux_25.0.3.0.tar.gz
 certified|25|jdk|s390x|25.0.3.0|1065082fa2928192d2c44f7bd131286aafa85428648fb7c86a7a81bfe8a14b89|https://github.com/ibmruntimes/semeru25-certified-binaries/releases/download/jdk-25.0.3.0/ibm-semeru-certified-jdk_s390x_linux_25.0.3.0.tar.gz
+
+# Java 26 JRE Open Edition
+open|26|jre|x64|26.0.1.0|2b2e2188636a3f481be93120969d07317e4993ad0a361e168db6e97328021f24|https://github.com/ibmruntimes/semeru26-binaries/releases/download/jdk-26.0.1.0/ibm-semeru-open-jre_x64_linux_26.0.1.0.tar.gz
+open|26|jre|aarch64|26.0.1.0|1e388a8c4282d1a5540395c515124e5e6198c1721d5fa8155b7b7c2c03e688ac|https://github.com/ibmruntimes/semeru26-binaries/releases/download/jdk-26.0.1.0/ibm-semeru-open-jre_aarch64_linux_26.0.1.0.tar.gz
+open|26|jre|ppc64le|26.0.1.0|ff54484e50b3f8b5ce8f9401be9e3638b9a60706ad12f93e90f62334185acb5d|https://github.com/ibmruntimes/semeru26-binaries/releases/download/jdk-26.0.1.0/ibm-semeru-open-jre_ppc64le_linux_26.0.1.0.tar.gz
+open|26|jre|s390x|26.0.1.0|ca26f6c287e3aa7244ead9ba6c9b8c08cf54f040ecd228fdb66722db3148db09|https://github.com/ibmruntimes/semeru26-binaries/releases/download/jdk-26.0.1.0/ibm-semeru-open-jre_s390x_linux_26.0.1.0.tar.gz
+
+# Java 26 JDK Open Edition
+open|26|jdk|x64|26.0.1.0|3dff964af21b38cf968568832e48a6b4053f3680c685644b7336864570f201f1|https://github.com/ibmruntimes/semeru26-binaries/releases/download/jdk-26.0.1.0/ibm-semeru-open-jdk_x64_linux_26.0.1.0.tar.gz
+open|26|jdk|aarch64|26.0.1.0|98fe02a30ee4aa709c9bdf8d358205e76b87194e737accf83dc94499973acfc6|https://github.com/ibmruntimes/semeru26-binaries/releases/download/jdk-26.0.1.0/ibm-semeru-open-jdk_aarch64_linux_26.0.1.0.tar.gz
+open|26|jdk|ppc64le|26.0.1.0|5ec6fb11341c7508e8b9d7ccf44f6126039b2ae6be9d713506cd2bdbeb92e1ca|https://github.com/ibmruntimes/semeru26-binaries/releases/download/jdk-26.0.1.0/ibm-semeru-open-jdk_ppc64le_linux_26.0.1.0.tar.gz
+open|26|jdk|s390x|26.0.1.0|08f5164d2cab42eb7ca8c4130fc1e27da9df6508399eb5d0615d0932b8ddae72|https://github.com/ibmruntimes/semeru26-binaries/releases/download/jdk-26.0.1.0/ibm-semeru-open-jdk_s390x_linux_26.0.1.0.tar.gz
