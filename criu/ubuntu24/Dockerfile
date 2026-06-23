@@ -20,7 +20,7 @@
 FROM public.ecr.aws/ubuntu/ubuntu:24.04
 
 ARG CRIU_REPO=https://github.com/ibmruntimes/criu.git
-ARG CRIU_BRANCH=upstream-master
+ARG CRIU_BRANCH=criu-dev
 # Last stable commit SHA
 ARG CRIU_SHA
 
@@ -82,6 +82,7 @@ RUN set -e \
     fi; \
     make DESTDIR=/tmp/criu PREFIX=/usr/local LIBDIR=/usr/local/lib64 install-lib install-criu \
     && cd ../ \
+    && rm -rf /tmp/criu/usr/local/lib/python* \
     && tar -czf criu.tar.gz criu \
     && sha256sum criu.tar.gz > criu.tar.gz.sha256.txt \
     && rm -rf criu-build

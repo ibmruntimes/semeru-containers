@@ -20,7 +20,7 @@
 FROM public.ecr.aws/ubuntu/ubuntu:26.04
 
 ARG CRIU_REPO=https://github.com/ibmruntimes/criu.git
-ARG CRIU_BRANCH=upstream-master
+ARG CRIU_BRANCH=criu-dev
 # Last stable commit SHA
 ARG CRIU_SHA
 
@@ -74,17 +74,13 @@ RUN apt-get update && \
 
 RUN set -e \
     && cd /tmp \
-    && git config --global user.email "$(hostname)@$(hostname).com" \
     && git clone -b ${CRIU_BRANCH} ${CRIU_REPO} \
     && mv criu criu-build \
     && cd criu-build && \
     if [ "x${CRIU_SHA}" != x ] ; then \
         git reset --hard ${CRIU_SHA}; \
     fi; \
-    git remote add upstream https://github.com/checkpoint-restore/criu.git \
-    && git fetch upstream criu-dev \
-    && git cherry-pick 90300748effc1cf0fe56e35d3d1cc2ddfedab246 3f3acc3200a23140abaa32a2017ae159d3c2d02c \
-    && make DESTDIR=/tmp/criu PREFIX=/usr/local LIBDIR=/usr/local/lib64 install-lib install-criu \
+    make DESTDIR=/tmp/criu PREFIX=/usr/local LIBDIR=/usr/local/lib64 install-lib install-criu \
     && cd ../ \
     && tar -czf criu.tar.gz criu \
     && sha256sum criu.tar.gz > criu.tar.gz.sha256.txt \

@@ -22,7 +22,7 @@ FROM registry.suse.com/bci/bci-base:16.0
 WORKDIR /tmp
 
 ARG CRIU_REPO=https://github.com/ibmruntimes/criu.git
-ARG CRIU_BRANCH=upstream-master
+ARG CRIU_BRANCH=criu-dev
 # Last stable commit SHA
 ARG CRIU_SHA
 
@@ -80,18 +80,15 @@ RUN zypper --gpg-auto-import-keys refresh && \
 RUN set -e \
     && cd /tmp \
     && python3 -m pip install --upgrade pip setuptools \
-    && git config --global user.email "$(hostname)@$(hostname).com" \
     && git clone -b ${CRIU_BRANCH} ${CRIU_REPO} \
     && mv criu criu-build \
     && cd criu-build && \
     if [ "x${CRIU_SHA}" != x ] ; then \
         git reset --hard ${CRIU_SHA}; \
     fi; \
-    git remote add upstream https://github.com/checkpoint-restore/criu.git \
-    && git fetch upstream criu-dev \
-    && git cherry-pick d3dfb663b1022ec89431a0e61113f55a771bc73c \
-    && make DESTDIR=/tmp/criu PREFIX=/usr/local LIBDIR=/usr/local/lib64 install-lib install-criu \
+    make DESTDIR=/tmp/criu PREFIX=/usr/local LIBDIR=/usr/local/lib64 install-lib install-criu \
     && cd ../ \
+    && rm -rf /tmp/criu/usr/local/lib/python* \
     && tar -czf criu.tar.gz criu \
     && sha256sum criu.tar.gz > criu.tar.gz.sha256.txt \
     && rm -rf criu-build

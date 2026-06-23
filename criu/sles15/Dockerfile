@@ -20,7 +20,7 @@
 FROM registry.suse.com/suse/sle15:15.7
 
 ARG CRIU_REPO=https://github.com/ibmruntimes/criu.git
-ARG CRIU_BRANCH=upstream-master
+ARG CRIU_BRANCH=criu-dev
 # Last stable commit SHA
 ARG CRIU_SHA
 
@@ -69,6 +69,7 @@ RUN zypper update -y && \
     python311-pip \
     python311-protobuf \
     python311-PyYAML \
+    python311-wheel \
     vim \
     xmlto
 
@@ -83,8 +84,9 @@ RUN set -e \
     if [ "x${CRIU_SHA}" != x ] ; then \
         git reset --hard ${CRIU_SHA}; \
     fi; \
-    && make CC=/usr/bin/gcc-13 DESTDIR=/tmp/criu PREFIX=/usr/local LIBDIR=/usr/local/lib64 install-lib install-criu \
+    make CC=/usr/bin/gcc-13 DESTDIR=/tmp/criu PREFIX=/usr/local LIBDIR=/usr/local/lib64 install-lib install-criu \
     && cd ../ \
+    && rm -rf /tmp/criu/usr/local/lib/python* \
     && tar -czf criu.tar.gz criu \
     && sha256sum criu.tar.gz > criu.tar.gz.sha256.txt \
     && rm -rf criu-build
