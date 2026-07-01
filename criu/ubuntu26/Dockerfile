@@ -82,6 +82,7 @@ RUN set -e \
     fi; \
     make DESTDIR=/tmp/criu PREFIX=/usr/local LIBDIR=/usr/local/lib64 install-lib install-criu \
     && cd ../ \
+    && rm -rf /tmp/criu/usr/local/lib/python* \
     && tar -czf criu.tar.gz criu \
     && sha256sum criu.tar.gz > criu.tar.gz.sha256.txt \
     && rm -rf criu-build
