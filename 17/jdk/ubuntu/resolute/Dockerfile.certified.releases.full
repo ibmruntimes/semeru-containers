@@ -1,0 +1,128 @@
+# (C) Copyright IBM Corporation 2026
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+FROM ubuntu:26.04
+
+ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
+
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tzdata curl ca-certificates fontconfig locales \
+    && echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
+    && locale-gen en_US.UTF-8 \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV JAVA_VERSION 17.0.20.0
+
+RUN set -eux; \
+    ARCH="$(dpkg --print-architecture)"; \
+    case "${ARCH}" in \
+       aarch64|arm64) \
+         ESUM='770c33c811626f428ef37e60d5422c87093547cddab339a816c7db1e2bee2327'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru17-certified-binaries/releases/download/jdk-17.0.20.0/ibm-semeru-certified-jdk_aarch64_linux_17.0.20.0.tar.gz'; \
+         ;; \
+       amd64|x86_64) \
+         ESUM='f9f525b99cd0ea4e059daf41f359233814a850cf07dd53f094e64c31e059d155'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru17-certified-binaries/releases/download/jdk-17.0.20.0/ibm-semeru-certified-jdk_x64_linux_17.0.20.0.tar.gz'; \
+         ;; \
+       ppc64el|ppc64le) \
+         ESUM='d77181af958e993d6ad7cacb4c5ef06933dce89b63ed628580c8f8afb2af10d3'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru17-certified-binaries/releases/download/jdk-17.0.20.0/ibm-semeru-certified-jdk_ppc64le_linux_17.0.20.0.tar.gz'; \
+         ;; \
+       s390x) \
+         ESUM='ccb26002324f22517ca9fd6db6e891d0d3b0b49abe2f49d0f3f8fa610a617dfa'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru17-certified-binaries/releases/download/jdk-17.0.20.0/ibm-semeru-certified-jdk_s390x_linux_17.0.20.0.tar.gz'; \
+         ;; \
+       *) \
+         echo "Unsupported arch: ${ARCH}"; \
+         exit 1; \
+         ;; \
+    esac; \
+    curl -LfsSo /tmp/openjdk.tar.gz ${BINARY_URL}; \
+    echo "${ESUM} */tmp/openjdk.tar.gz" | sha256sum -c -; \
+    mkdir -p /opt/ibm/; \
+    cd /opt/ibm/; \
+    tar -xf /tmp/openjdk.tar.gz ; \
+    mkdir -p /licenses; \
+    mv /opt/ibm/jdk-17* /opt/ibm/java; \
+    cp /opt/ibm/java/legal/java.base/license/license_en.txt /licenses; \
+    rm -rf /tmp/openjdk.tar.gz;
+
+ENV JAVA_HOME=/opt/ibm/java \
+    PATH="/opt/ibm/java/bin:$PATH"
+ENV JAVA_TOOL_OPTIONS="-XX:+IgnoreUnrecognizedVMOptions -XX:+PortableSharedCache -XX:+IdleTuningGcOnIdle -Xshareclasses:name=openj9_system_scc,cacheDir=/opt/java/.scc,readonly,nonFatal"
+
+# Create OpenJ9 SharedClassCache (SCC) for bootclasses to improve the java startup.
+# Downloads and runs tomcat to geSCC for bootclasses at /opt/java/.scc/openj9_system_scc
+# Does a dry-run and calculates the optimal cache size and recreates the cache with the appropriate size.
+# With SCC, OpenJ9 startup is improved ~50% with an increase in image size of ~14MB
+# Application classes can be create a separate cache layer with this as the base for further startup improvement
+
+RUN set -eux; \
+    unset OPENJ9_JAVA_OPTIONS; \
+    SCC_SIZE="50m"; \
+    DOWNLOAD_PATH_TOMCAT=/tmp/tomcat; \
+    INSTALL_PATH_TOMCAT=/opt/tomcat-home; \
+    export CATALINA_PID=/opt/tomcat-home/tomcat.pid; \
+    TOMCAT_CHECKSUM="82b15278a7bfa2685c80e07963c43246df4fd742d574b608a68f5ce67c6ffde0eff3e224cc9809925cc6bf7002a190c3bf420f50c0e4052467d3e665efc84a54"; \
+    TOMCAT_VERSION="9.0.117"; \
+    TOMCAT_FILENAME="apache-tomcat-${TOMCAT_VERSION}.tar.gz"; \
+    SUCCESS=; \
+    \
+    mkdir -p "${DOWNLOAD_PATH_TOMCAT}" "${INSTALL_PATH_TOMCAT}"; \
+    for baseUrl in \
+        https://dlcdn.apache.org/tomcat/tomcat-9/v${TOMCAT_VERSION}/bin \
+        https://archive.apache.org/dist/tomcat/tomcat-9/v${TOMCAT_VERSION}/bin \
+    ; do \
+        if curl -LfsSo "${DOWNLOAD_PATH_TOMCAT}"/tomcat.tar.gz "${baseUrl}/${TOMCAT_FILENAME}" && [ -s "${DOWNLOAD_PATH_TOMCAT}"/tomcat.tar.gz ]; then \
+            SUCCESS=1; \
+            break; \
+        fi; \
+    done; \
+    [ -n "$SUCCESS" ]; \
+    echo "${TOMCAT_CHECKSUM}  ${DOWNLOAD_PATH_TOMCAT}/tomcat.tar.gz" | sha512sum -c -; \
+    tar -xf "${DOWNLOAD_PATH_TOMCAT}"/tomcat.tar.gz -C "${INSTALL_PATH_TOMCAT}" --strip-components=1; \
+    rm -rf "${DOWNLOAD_PATH_TOMCAT}"; \
+    \
+    java -Xshareclasses:name=dry_run_scc,cacheDir=/opt/java/.scc,bootClassesOnly,nonFatal,createLayer -Xscmx$SCC_SIZE -version; \
+    export OPENJ9_JAVA_OPTIONS="-XX:+IProfileDuringStartupPhase -Xshareclasses:name=dry_run_scc,cacheDir=/opt/java/.scc,bootClassesOnly,nonFatal"; \
+    "${INSTALL_PATH_TOMCAT}"/bin/startup.sh; \
+    sleep 20; \
+    "${INSTALL_PATH_TOMCAT}"/bin/shutdown.sh -force; \
+    sleep 15; \
+    FULL=$( (java -Xshareclasses:name=dry_run_scc,cacheDir=/opt/java/.scc,printallStats 2>&1 || true) | awk '/^Cache is [0-9.]*% .*full/ {print substr($3, 1, length($3)-1)}'); \
+    DST_CACHE=$(java -Xshareclasses:name=dry_run_scc,cacheDir=/opt/java/.scc,destroy 2>&1 || true); \
+    SCC_SIZE=$(echo $SCC_SIZE | sed 's/.$//'); \
+    SCC_SIZE=$(awk "BEGIN {print int($SCC_SIZE * $FULL / 100.0)}"); \
+    [ "${SCC_SIZE}" -eq 0 ] && SCC_SIZE=1; \
+    SCC_SIZE="${SCC_SIZE}m"; \
+    java -Xshareclasses:name=openj9_system_scc,cacheDir=/opt/java/.scc,bootClassesOnly,nonFatal,createLayer -Xscmx$SCC_SIZE -version; \
+    unset OPENJ9_JAVA_OPTIONS; \
+    \
+    export OPENJ9_JAVA_OPTIONS="-XX:+IProfileDuringStartupPhase -Xshareclasses:name=openj9_system_scc,cacheDir=/opt/java/.scc,bootClassesOnly,nonFatal"; \
+    "${INSTALL_PATH_TOMCAT}"/bin/startup.sh; \
+    sleep 20; \
+    "${INSTALL_PATH_TOMCAT}"/bin/shutdown.sh -force; \
+    sleep 5; \
+    FULL=$( (java -Xshareclasses:name=openj9_system_scc,cacheDir=/opt/java/.scc,printallStats 2>&1 || true) | awk '/^Cache is [0-9.]*% .*full/ {print substr($3, 1, length($3)-1)}'); \
+    echo "SCC layer is $FULL% full."; \
+    rm -rf "${INSTALL_PATH_TOMCAT}"; \
+    unset CATALINA_PID; \
+    if [ -d "/opt/java/.scc" ]; then \
+          chmod -R 0777 /opt/java/.scc; \
+    fi; \
+    \
+    echo "SCC generation phase completed";
+
+CMD ["jshell"]
