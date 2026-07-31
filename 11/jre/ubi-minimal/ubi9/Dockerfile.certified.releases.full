@@ -26,7 +26,7 @@ RUN microdnf install -y \
 
 LABEL name="IBM Semeru Runtime Certified Edition" \
       vendor="International Business Machines Corporation" \
-      version="11.0.31.0" \
+      version="11.0.32.0" \
       release="11" \
       maintainer="jayasg12@in.ibm.com" \
       run="docker run --rm -ti <image_name:tag> /bin/bash" \
@@ -81,26 +81,26 @@ RUN --mount=type=secret,id=criu_secrets source /run/secrets/criu_secrets; \
 
 ENV PATH="/usr/local/sbin:$PATH"
 
-ENV JAVA_VERSION 11.0.31.0
+ENV JAVA_VERSION 11.0.32.0
 
 RUN set -eux; \
     ARCH="$(uname -m)"; \
     case "${ARCH}" in \
        amd64|x86_64) \
-         ESUM='fbe6f32a24321a7b55953b881a8fd4dc4c7aa501bff414dde060fbc0d8b1f8a1'; \
-         BINARY_URL='https://github.com/ibmruntimes/semeru11-certified-binaries/releases/download/jdk-11.0.31.0/ibm-semeru-certified-jre_x64_linux_11.0.31.0.tar.gz'; \
+         ESUM='2847dba0aa943a7c96a5c917d7f9d958bc1a9d42313d2461d7292a332a2cdcf6'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru11-certified-binaries/releases/download/jdk-11.0.32.0/ibm-semeru-certified-jre_x64_linux_11.0.32.0.tar.gz'; \
          ;; \
        ppc64el|ppc64le) \
-         ESUM='c29715aa55d6d56944d3e0869de4610106940302f214ca6cecea5ff4119eb86e'; \
-         BINARY_URL='https://github.com/ibmruntimes/semeru11-certified-binaries/releases/download/jdk-11.0.31.0/ibm-semeru-certified-jre_ppc64le_linux_11.0.31.0.tar.gz'; \
+         ESUM='c23519c083fca315c0f4b53692e344a723203ab6b7a6e3daf7020f71034299a1'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru11-certified-binaries/releases/download/jdk-11.0.32.0/ibm-semeru-certified-jre_ppc64le_linux_11.0.32.0.tar.gz'; \
          ;; \
        s390x) \
-         ESUM='d3dc36317a3ae22dceac57525b538a0434b7c62f9d3d0ebeb00d74ab48dca003'; \
-         BINARY_URL='https://github.com/ibmruntimes/semeru11-certified-binaries/releases/download/jdk-11.0.31.0/ibm-semeru-certified-jre_s390x_linux_11.0.31.0.tar.gz'; \
+         ESUM='92072e82b9c370bb789c7e42c78055174deb4a402c6e902031a716fe5a5972eb'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru11-certified-binaries/releases/download/jdk-11.0.32.0/ibm-semeru-certified-jre_s390x_linux_11.0.32.0.tar.gz'; \
          ;; \
        aarch64|arm64) \
-         ESUM='4e2682dc094e8f4ec8895b608278692ab11f4947cfcaf6499cc1f291e72c6b31'; \
-         BINARY_URL='https://github.com/ibmruntimes/semeru11-certified-binaries/releases/download/jdk-11.0.31.0/ibm-semeru-certified-jre_aarch64_linux_11.0.31.0.tar.gz'; \
+         ESUM='2ab8a45eb2741c9de3246ce274ab446039ab9c15551952c2765573e9eec8dba5'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru11-certified-binaries/releases/download/jdk-11.0.32.0/ibm-semeru-certified-jre_aarch64_linux_11.0.32.0.tar.gz'; \
          ;; \
        *) \
          echo "Unsupported arch: ${ARCH}"; \

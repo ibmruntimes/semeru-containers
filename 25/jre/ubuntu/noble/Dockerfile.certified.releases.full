@@ -23,26 +23,26 @@ RUN apt-get update \
     && locale-gen en_US.UTF-8 \
     && rm -rf /var/lib/apt/lists/*
 
-ENV JAVA_VERSION 25.0.3.0
+ENV JAVA_VERSION 25.0.4.0
 
 RUN set -eux; \
     ARCH="$(dpkg --print-architecture)"; \
     case "${ARCH}" in \
        aarch64|arm64) \
-         ESUM='80188a8937590455c9338f1965ee5fbbc193588bfc1ee173b6b8ea50b4bfc1d4'; \
-         BINARY_URL='https://github.com/ibmruntimes/semeru25-certified-binaries/releases/download/jdk-25.0.3.0/ibm-semeru-certified-jre_aarch64_linux_25.0.3.0.tar.gz'; \
+         ESUM='70fd4b9e7625cdd619889242650cf511b103861a00fb4fe4d2fde96283a32112'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru25-certified-binaries/releases/download/jdk-25.0.4.0/ibm-semeru-certified-jre_aarch64_linux_25.0.4.0.tar.gz'; \
          ;; \
        amd64|x86_64) \
-         ESUM='98f50ece1a9ee9c95426c3585846f4ea1dfff18c49207496089f06dd28773feb'; \
-         BINARY_URL='https://github.com/ibmruntimes/semeru25-certified-binaries/releases/download/jdk-25.0.3.0/ibm-semeru-certified-jre_x64_linux_25.0.3.0.tar.gz'; \
+         ESUM='fe5af69175d8ac40439ac4712d5fbf034a4d16df58c6a4beedcb629b18aab461'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru25-certified-binaries/releases/download/jdk-25.0.4.0/ibm-semeru-certified-jre_x64_linux_25.0.4.0.tar.gz'; \
          ;; \
        ppc64el|ppc64le) \
-         ESUM='87de02bd131f733077bba1912f1fa7fa6ec63dc5e8375cbf507248b0fc519846'; \
-         BINARY_URL='https://github.com/ibmruntimes/semeru25-certified-binaries/releases/download/jdk-25.0.3.0/ibm-semeru-certified-jre_ppc64le_linux_25.0.3.0.tar.gz'; \
+         ESUM='8e192bbe0f1e0041051e7de932dee8f51a81e211bc870252c39ea8bd59c615d0'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru25-certified-binaries/releases/download/jdk-25.0.4.0/ibm-semeru-certified-jre_ppc64le_linux_25.0.4.0.tar.gz'; \
          ;; \
        s390x) \
-         ESUM='ce7dd7013dc873a11dab2bad9030270b542f46be9f8b19a370b3a015bab82bf8'; \
-         BINARY_URL='https://github.com/ibmruntimes/semeru25-certified-binaries/releases/download/jdk-25.0.3.0/ibm-semeru-certified-jre_s390x_linux_25.0.3.0.tar.gz'; \
+         ESUM='f02d957d22d34617ae5108553b01882126900a9b794293a13b9a982829feb843'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru25-certified-binaries/releases/download/jdk-25.0.4.0/ibm-semeru-certified-jre_s390x_linux_25.0.4.0.tar.gz'; \
          ;; \
        *) \
          echo "Unsupported arch: ${ARCH}"; \
