@@ -77,7 +77,7 @@ esac
 IMAGE="registry.access.redhat.com/$UBI_VERSION/$UBI_BASE"
 
 CRIU_BINARY_BASE_URL="https://na.artifactory.swg-devops.com/artifactory/hyc-rt-java-delivery-generic-local/IBM/java/criu_build"
-CRIU_BUILD_ID=146
+CRIU_BUILD_ID=148
 
 # Source the buildah build script if we're building a ubi-micro image
 if [ "$UBI_BASE" = "ubi-micro" ]; then
