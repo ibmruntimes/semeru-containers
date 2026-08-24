@@ -270,8 +270,8 @@ fi
 
 echo "Installing Tomcat for SCC generation..." >&2
 
-tomcat_version="9.0.115"
-tomcat_checksum="8e6fa92883c161523269560a7dc9e8d58fd1199b29c630f681aa3ec2975b59d94674d2881331076b55f5ee0439748931d87c099c79d7bcea909303739e612e4b"
+tomcat_version="9.0.121"
+tomcat_checksum="16494dd4745f808d3c506807b5275521fd71044d976f441d18eeeab0f5a38bc1b5344ca395292f6f26eb7612cd8c8e746d01ccdfb29893d394052d9f4b1f4c11"
 tomcat_filename="apache-tomcat-${tomcat_version}.tar.gz"
 tomcat_host_download_path="/tmp"
 tomcat_tarball="$tomcat_host_download_path/$tomcat_filename"
