@@ -19,7 +19,7 @@ ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
 
 RUN dnf install -y \
     # CRIU dependencies
-        iptables-libs iptables jansson libibverbs libmnl libnet libnftnl libpcap nftables protobuf-c \
+        iptables-libs jansson libibverbs libmnl libnet libnftnl libpcap nftables protobuf-c \
     # Semeru dependencies
         tzdata openssl ca-certificates fontconfig glibc-langpack-en gzip tar \
     && dnf update -y && dnf clean all;
