@@ -13,6 +13,78 @@
 # limitations under the License.
 #
 
+FROM registry.access.redhat.com/ubi10/ubi:latest AS glibc-builder
+
+RUN dnf install -y \
+        gcc gcc-c++ make \
+        rpm-build rpmdevtools \
+        dnf-plugins-core \
+        bison \
+        gettext \
+        python3 \
+        systemtap-sdt-devel \
+        libcap-devel \
+        kernel-headers \
+        patch \
+    && dnf clean all
+
+# Enable source repos and fetch glibc SRPM
+RUN dnf config-manager --enable *source* 2>/dev/null || true && \
+    dnf download --source glibc -y --destdir /tmp && \
+    rpm -ivh /tmp/glibc-*.src.rpm --define "_topdir /build/rpmbuild" && \
+    rm -f /tmp/glibc-*.src.rpm
+
+# Install all build dependencies from spec
+RUN dnf builddep -y \
+        --define "_topdir /build/rpmbuild" \
+        --define "_without_docs 1" \
+        /build/rpmbuild/SPECS/glibc.spec && \
+    dnf clean all
+
+# Prepare source tree via %prep
+RUN rpmbuild -bp \
+        --define "_topdir /build/rpmbuild" \
+        --without docs \
+        --nocheck \
+        /build/rpmbuild/SPECS/glibc.spec
+
+# Copy and apply custom patch
+COPY glibc-xsave-buffer-size-4k.patch /tmp/glibc-xsave-buffer-size-4k.patch
+RUN BUILD_DIR=$(find /build/rpmbuild/BUILD -maxdepth 1 -mindepth 1 -type d | head -1) && \
+    patch -d "${BUILD_DIR}" -p1 < /tmp/glibc-xsave-buffer-size-4k.patch && \
+    rm -f /tmp/glibc-xsave-buffer-size-4k.patch
+
+# Compile, stage, and package RPMs
+RUN rpmbuild -bc --short-circuit \
+        --define "_topdir /build/rpmbuild" \
+        --without docs \
+        --nocheck \
+        /build/rpmbuild/SPECS/glibc.spec && \
+    rm -rf /build/rpmbuild/BUILDROOT && \
+    rpmbuild -bi --short-circuit \
+        --define "_topdir /build/rpmbuild" \
+        --without docs \
+        --nocheck \
+        /build/rpmbuild/SPECS/glibc.spec && \
+    rpmbuild -bb --short-circuit \
+        --define "_topdir /build/rpmbuild" \
+        --without docs \
+        --nocheck \
+        /build/rpmbuild/SPECS/glibc.spec
+
+FROM registry.access.redhat.com/ubi10/ubi:latest AS glibc-extractor
+
+RUN dnf install -y cpio && dnf clean all
+
+RUN mkdir -p /opt/glibc
+COPY --from=glibc-builder /build/rpmbuild/RPMS /tmp/rpms
+RUN cd /opt/glibc && \
+    for rpmfile in $(find /tmp/rpms -name 'glibc-2*.rpm' -o -name 'glibc-common-2*.rpm' | grep -v 'glibc-devel' | grep -v 'glibc-static' | grep -v 'glibc-all-langpacks' | grep -v 'glibc-gconv-extra' | grep -v 'glibc-benchtests' | grep -v 'glibc-utils' | grep -v 'debuginfo' | grep -v 'debugsource'); do \
+        echo "Extracting $rpmfile to /opt/glibc..."; \
+        rpm2cpio "$rpmfile" | cpio -idmv; \
+    done && \
+    rm -rf /tmp/rpms
+
 FROM registry.access.redhat.com/ubi10/ubi:latest AS base-image
 
 ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
@@ -197,6 +269,7 @@ RUN glibc_hwcaps_dirs=$(ldconfig --print-cache | sed --regexp-extended --silent 
 
 FROM base-image
 
+COPY --from=glibc-extractor /opt/glibc /opt/glibc
 COPY --from=instanton-ldconfig /etc/ld.so.cache /etc/instanton.ld.so.cache
 
 USER 1001
