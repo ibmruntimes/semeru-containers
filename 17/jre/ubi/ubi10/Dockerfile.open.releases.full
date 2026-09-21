@@ -85,6 +85,19 @@ RUN cd /opt/glibc && \
     done && \
     rm -rf /tmp/rpms
 
+# Download standalone patchelf binary
+RUN set -eux; \
+    ARCH="$(uname -m)"; \
+    case "${ARCH}" in \
+        amd64|x86_64) PATCHELF_ARCH="x86_64" ;; \
+        aarch64|arm64) PATCHELF_ARCH="aarch64" ;; \
+        *) echo "Unsupported arch for patchelf: ${ARCH}"; exit 1 ;; \
+    esac; \
+    curl -LfsSo /tmp/patchelf.tar.gz "https://github.com/NixOS/patchelf/releases/download/0.18.0/patchelf-0.18.0-${PATCHELF_ARCH}.tar.gz"; \
+    mkdir -p /opt/patchelf; \
+    tar --no-same-owner --no-same-permissions -xf /tmp/patchelf.tar.gz -C /opt/patchelf; \
+    rm -f /tmp/patchelf.tar.gz
+
 FROM registry.access.redhat.com/ubi10/ubi:latest AS base-image
 
 ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
@@ -188,6 +201,33 @@ RUN set -eux; \
     cp /opt/java/openjdk/legal/java.base/LICENSE /licenses; \
     rm -rf /tmp/openjdk.tar.gz;
 
+# Copy patched glibc and patchelf
+COPY --from=glibc-extractor /opt/glibc /opt/glibc
+COPY --from=glibc-extractor /opt/patchelf/bin/patchelf /usr/local/bin/patchelf
+
+# Patch Semeru binaries and libraries to use /opt/glibc
+RUN set -eux; \
+    ARCH="$(uname -m)"; \
+    case "${ARCH}" in \
+        amd64|x86_64) LD_SO="/opt/glibc/usr/lib64/ld-linux-x86-64.so.2" ;; \
+        aarch64|arm64) LD_SO="/opt/glibc/usr/lib64/ld-linux-aarch64.so.1" ;; \
+        ppc64el|ppc64le) LD_SO="/opt/glibc/usr/lib64/ld64.so.2" ;; \
+        s390x) LD_SO="/opt/glibc/usr/lib64/ld64.so.1" ;; \
+        *) echo "Unsupported arch: ${ARCH}"; exit 1 ;; \
+    esac; \
+    for f in $(find /opt/java/openjdk -type f); do \
+        case "$(head -c 4 "$f" 2>/dev/null)" in \
+            $'\x7fELF') \
+                if [[ "$f" == */bin/* ]]; then \
+                    patchelf --set-interpreter "${LD_SO}" --set-rpath '/opt/glibc/usr/lib64:$ORIGIN:$ORIGIN/../lib:$ORIGIN/../lib/default' "$f"; \
+                else \
+                    patchelf --set-rpath '/opt/glibc/usr/lib64:$ORIGIN:$ORIGIN/default' "$f"; \
+                fi; \
+                ;; \
+        esac; \
+    done; \
+    rm -f /usr/local/bin/patchelf;
+
 ENV JAVA_HOME=/opt/java/openjdk \
     PATH="/opt/java/openjdk/bin:$PATH"
 ENV JAVA_TOOL_OPTIONS="-XX:+IgnoreUnrecognizedVMOptions -XX:+PortableSharedCache -XX:+IdleTuningGcOnIdle -Xshareclasses:name=openj9_system_scc,cacheDir=/opt/java/.scc,readonly,nonFatal"
@@ -269,7 +309,6 @@ RUN glibc_hwcaps_dirs=$(ldconfig --print-cache | sed --regexp-extended --silent 
 
 FROM base-image
 
-COPY --from=glibc-extractor /opt/glibc /opt/glibc
 COPY --from=instanton-ldconfig /etc/ld.so.cache /etc/instanton.ld.so.cache
 
 USER 1001
