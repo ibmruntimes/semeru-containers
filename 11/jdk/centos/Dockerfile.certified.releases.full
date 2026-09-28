@@ -20,26 +20,26 @@ ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
 RUN yum install -y tzdata openssl curl ca-certificates fontconfig gzip tar \
     && yum clean all
 
-ENV JAVA_VERSION 11.0.32.10
+ENV JAVA_VERSION 11.0.32.15
 
 RUN set -eux; \
     ARCH="$(uname -m)"; \
     case "${ARCH}" in \
        amd64|x86_64) \
-         ESUM='2da8cb20a47fbafd79d10a5787895370a4cd19c39037c7000bb2885e3baee2df'; \
-         BINARY_URL='https://github.com/ibmruntimes/semeru11-certified-binaries/releases/download/jdk-11.0.32.10/ibm-semeru-certified-jdk_x64_linux_11.0.32.10.tar.gz'; \
+         ESUM='2ad19f248b92063c8e38b8df8dd428ba25c6dc7757a08101e5783f0bed3b6b88'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru11-certified-binaries/releases/download/jdk-11.0.32.15/ibm-semeru-certified-jdk_x64_linux_11.0.32.15.tar.gz'; \
          ;; \
        ppc64el|ppc64le) \
-         ESUM='633cbccb576d7f2a811aa3072a32748221a5c36f756242737cce04627e5e3929'; \
-         BINARY_URL='https://github.com/ibmruntimes/semeru11-certified-binaries/releases/download/jdk-11.0.32.10/ibm-semeru-certified-jdk_ppc64le_linux_11.0.32.10.tar.gz'; \
+         ESUM='ec62d849d931e9cf4d251b16dd985f9016283bd73da452998b990cfdee3b926d'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru11-certified-binaries/releases/download/jdk-11.0.32.15/ibm-semeru-certified-jdk_ppc64le_linux_11.0.32.15.tar.gz'; \
          ;; \
        s390x) \
-         ESUM='58f82696c57bfd9563ef3374e82395a55d793d3e55149c82bd5ec0d364d0e70f'; \
-         BINARY_URL='https://github.com/ibmruntimes/semeru11-certified-binaries/releases/download/jdk-11.0.32.10/ibm-semeru-certified-jdk_s390x_linux_11.0.32.10.tar.gz'; \
+         ESUM='dc2b9ad2522ac0212b6b2fac2bcbde45bc7c30bb454493dff19697633d1271fa'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru11-certified-binaries/releases/download/jdk-11.0.32.15/ibm-semeru-certified-jdk_s390x_linux_11.0.32.15.tar.gz'; \
          ;; \
        aarch64|arm64) \
-         ESUM='6b8d98c4f2c05bc6800f11ee2fd5f8b87c627955373950fccac3fed3c40b867c'; \
-         BINARY_URL='https://github.com/ibmruntimes/semeru11-certified-binaries/releases/download/jdk-11.0.32.10/ibm-semeru-certified-jdk_aarch64_linux_11.0.32.10.tar.gz'; \
+         ESUM='6de89b2df3d080438b301514cf8f5443cbfea4ca29419cfbf3417e5241df621f'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru11-certified-binaries/releases/download/jdk-11.0.32.15/ibm-semeru-certified-jdk_aarch64_linux_11.0.32.15.tar.gz'; \
          ;; \
        *) \
          echo "Unsupported arch: ${ARCH}"; \

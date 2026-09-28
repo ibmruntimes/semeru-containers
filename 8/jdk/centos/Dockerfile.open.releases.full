@@ -20,26 +20,26 @@ ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
 RUN yum install -y tzdata openssl curl ca-certificates fontconfig gzip tar \
     && yum clean all
 
-ENV JAVA_VERSION 8.0.504.0
+ENV JAVA_VERSION 8.0.504.5
 
 RUN set -eux; \
     ARCH="$(uname -m)"; \
     case "${ARCH}" in \
        aarch64|arm64) \
-         ESUM='dcc4703320a829081ac36326a023d3236ed31155570ccf1c2f5cb845448aac6a'; \
-         BINARY_URL='https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk-8.0.504.0/ibm-semeru-open-jdk_aarch64_linux_8.0.504.0.tar.gz'; \
+         ESUM='08332a27351b86b0ad7005da9f219df3fec901a6376a5a851adf005756f9cb98'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk-8.0.504.5/ibm-semeru-open-jdk_aarch64_linux_8.0.504.5.tar.gz'; \
          ;; \
        ppc64el|ppc64le) \
-         ESUM='3303ba30271c4cfc60f1d8d10477394e2ae1906b4f017199ddfcbaec2c4cdf11'; \
-         BINARY_URL='https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk-8.0.504.0/ibm-semeru-open-jdk_ppc64le_linux_8.0.504.0.tar.gz'; \
+         ESUM='e8aa32a66649ed1e7d6c3096645c9364d6ba8dc68180c2b9b70d10c0b44497d4'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk-8.0.504.5/ibm-semeru-open-jdk_ppc64le_linux_8.0.504.5.tar.gz'; \
          ;; \
        amd64|x86_64) \
-         ESUM='5037b916de02da2f6a4efbf5f57733e35e58ffbb3e6874612ff92790e3a6fc28'; \
-         BINARY_URL='https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk-8.0.504.0/ibm-semeru-open-jdk_x64_linux_8.0.504.0.tar.gz'; \
+         ESUM='212b7d085e5deacaeb455d661c1205b38d1751e194c3355dd90214cf7fb177d5'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk-8.0.504.5/ibm-semeru-open-jdk_x64_linux_8.0.504.5.tar.gz'; \
          ;; \
        s390x) \
-         ESUM='fb0b8625ebff4d0b0e332fe9174c78faf992b15b4ec0a38c04f044e3f6204d66'; \
-         BINARY_URL='https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk-8.0.504.0/ibm-semeru-open-jdk_s390x_linux_8.0.504.0.tar.gz'; \
+         ESUM='3a75653a29e219406d4cef97f243f1696961e20861a2ee630968f3dc05d2a8ce'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk-8.0.504.5/ibm-semeru-open-jdk_s390x_linux_8.0.504.5.tar.gz'; \
          ;; \
        *) \
          echo "Unsupported arch: ${ARCH}"; \
