@@ -13,6 +13,91 @@
 # limitations under the License.
 #
 
+FROM registry.access.redhat.com/ubi10/ubi:latest AS glibc-builder
+
+RUN dnf install -y \
+        gcc gcc-c++ make \
+        rpm-build rpmdevtools \
+        dnf-plugins-core \
+        bison \
+        gettext \
+        python3 \
+        systemtap-sdt-devel \
+        libcap-devel \
+        kernel-headers \
+        patch \
+    && dnf clean all
+
+# Enable source repos and fetch glibc SRPM
+RUN dnf config-manager --enable *source* 2>/dev/null || true && \
+    dnf download --source glibc -y --destdir /tmp && \
+    rpm -ivh /tmp/glibc-*.src.rpm --define "_topdir /build/rpmbuild" && \
+    rm -f /tmp/glibc-*.src.rpm
+
+# Install all build dependencies from spec
+RUN dnf builddep -y \
+        --define "_topdir /build/rpmbuild" \
+        --define "_without_docs 1" \
+        /build/rpmbuild/SPECS/glibc.spec && \
+    dnf clean all
+
+# Prepare source tree via %prep
+RUN rpmbuild -bp \
+        --define "_topdir /build/rpmbuild" \
+        --without docs \
+        --nocheck \
+        /build/rpmbuild/SPECS/glibc.spec
+
+# Copy and apply custom patch
+COPY glibc-xsave-buffer-size-4k.patch /tmp/glibc-xsave-buffer-size-4k.patch
+RUN BUILD_DIR=$(find /build/rpmbuild/BUILD -maxdepth 1 -mindepth 1 -type d | head -1) && \
+    patch -d "${BUILD_DIR}" -p1 < /tmp/glibc-xsave-buffer-size-4k.patch && \
+    rm -f /tmp/glibc-xsave-buffer-size-4k.patch
+
+# Compile, stage, and package RPMs
+RUN rpmbuild -bc --short-circuit \
+        --define "_topdir /build/rpmbuild" \
+        --without docs \
+        --nocheck \
+        /build/rpmbuild/SPECS/glibc.spec && \
+    rm -rf /build/rpmbuild/BUILDROOT && \
+    rpmbuild -bi --short-circuit \
+        --define "_topdir /build/rpmbuild" \
+        --without docs \
+        --nocheck \
+        /build/rpmbuild/SPECS/glibc.spec && \
+    rpmbuild -bb --short-circuit \
+        --define "_topdir /build/rpmbuild" \
+        --without docs \
+        --nocheck \
+        /build/rpmbuild/SPECS/glibc.spec
+
+FROM registry.access.redhat.com/ubi10/ubi:latest AS glibc-extractor
+
+RUN dnf install -y cpio && dnf clean all
+
+RUN mkdir -p /opt/glibc
+COPY --from=glibc-builder /build/rpmbuild/RPMS /tmp/rpms
+RUN cd /opt/glibc && \
+    for rpmfile in $(find /tmp/rpms -name 'glibc-2*.rpm' -o -name 'glibc-common-2*.rpm' | grep -v 'glibc-devel' | grep -v 'glibc-static' | grep -v 'glibc-all-langpacks' | grep -v 'glibc-gconv-extra' | grep -v 'glibc-benchtests' | grep -v 'glibc-utils' | grep -v 'debuginfo' | grep -v 'debugsource'); do \
+        echo "Extracting $rpmfile to /opt/glibc..."; \
+        rpm2cpio "$rpmfile" | cpio -idmv; \
+    done && \
+    rm -rf /tmp/rpms
+
+# Download standalone patchelf binary
+RUN set -eux; \
+    ARCH="$(uname -m)"; \
+    case "${ARCH}" in \
+        amd64|x86_64) PATCHELF_ARCH="x86_64" ;; \
+        aarch64|arm64) PATCHELF_ARCH="aarch64" ;; \
+        *) echo "Unsupported arch for patchelf: ${ARCH}"; exit 1 ;; \
+    esac; \
+    curl -LfsSo /tmp/patchelf.tar.gz "https://github.com/NixOS/patchelf/releases/download/0.18.0/patchelf-0.18.0-${PATCHELF_ARCH}.tar.gz"; \
+    mkdir -p /opt/patchelf; \
+    tar --no-same-owner --no-same-permissions -xf /tmp/patchelf.tar.gz -C /opt/patchelf; \
+    rm -f /tmp/patchelf.tar.gz
+
 FROM registry.access.redhat.com/ubi10/ubi:latest AS base-image
 
 ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
@@ -115,6 +200,33 @@ RUN set -eux; \
     mkdir -p /licenses; \
     cp /opt/java/openjdk/legal/java.base/LICENSE /licenses; \
     rm -rf /tmp/openjdk.tar.gz;
+
+# Copy patched glibc and patchelf
+COPY --from=glibc-extractor /opt/glibc /opt/glibc
+COPY --from=glibc-extractor /opt/patchelf/bin/patchelf /usr/local/bin/patchelf
+
+# Patch Semeru binaries and libraries to use /opt/glibc
+RUN set -eux; \
+    ARCH="$(uname -m)"; \
+    case "${ARCH}" in \
+        amd64|x86_64) LD_SO="/opt/glibc/usr/lib64/ld-linux-x86-64.so.2" ;; \
+        aarch64|arm64) LD_SO="/opt/glibc/usr/lib64/ld-linux-aarch64.so.1" ;; \
+        ppc64el|ppc64le) LD_SO="/opt/glibc/usr/lib64/ld64.so.2" ;; \
+        s390x) LD_SO="/opt/glibc/usr/lib64/ld64.so.1" ;; \
+        *) echo "Unsupported arch: ${ARCH}"; exit 1 ;; \
+    esac; \
+    for f in $(find /opt/java/openjdk -type f); do \
+        case "$(head -c 4 "$f" 2>/dev/null)" in \
+            $'\x7fELF') \
+                if [[ "$f" == */bin/* ]]; then \
+                    patchelf --set-interpreter "${LD_SO}" --set-rpath '/opt/glibc/usr/lib64:$ORIGIN:$ORIGIN/../lib:$ORIGIN/../lib/default' "$f"; \
+                else \
+                    patchelf --set-rpath '/opt/glibc/usr/lib64:$ORIGIN:$ORIGIN/default' "$f"; \
+                fi; \
+                ;; \
+        esac; \
+    done; \
+    rm -f /usr/local/bin/patchelf;
 
 ENV JAVA_HOME=/opt/java/openjdk \
     PATH="/opt/java/openjdk/bin:$PATH"

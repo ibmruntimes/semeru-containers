@@ -1,0 +1,13 @@
+diff -ru -x 'build-*' -x '*.filelist' -x '*.list' -x '*.gperf' glibc-2.39.orig/sysdeps/x86/cpu-features.c glibc-2.39/sysdeps/x86/cpu-features.c
+--- glibc-2.39.orig/sysdeps/x86/cpu-features.c	2026-09-16 20:23:13.727987344 +0000
++++ glibc-2.39/sysdeps/x86/cpu-features.c	2026-09-16 21:40:02.323135716 +0000
+@@ -317,7 +317,8 @@
+ 	      /* NB: On AMX capable processors, ebx always includes AMX
+ 		 states.  */
+ 	      unsigned int xsave_state_full_size
+-		= ALIGN_UP (ebx + TLSDESC_CALL_REGISTER_SAVE_AREA, 64);
++		/*= ALIGN_UP (ebx + TLSDESC_CALL_REGISTER_SAVE_AREA, 64);*/
++	        = 4096;
+ 
+ 	      cpu_features->xsave_state_size
+ 		= xsave_state_full_size;
