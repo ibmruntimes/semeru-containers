@@ -67,16 +67,16 @@ open|25|jdk|s390x|25.0.5.0|d1b89a09ac193531eb5c558a20712477c85c933e6c3544c354582
 open|25|jdk|aarch64|25.0.5.0|0d011789093c1e5e4da6843a8f40947a36c2f0af0199e6be64590d279e37e7cc|https://github.com/ibmruntimes/semeru25-binaries/releases/download/jdk-25.0.5.0/ibm-semeru-open-jdk_aarch64_linux_25.0.5.0.tar.gz
 
 # Java 27 JRE Open Edition
-open|27|jre|x64|27.0.0.0|9e6d9c1131da124bd08eb4183f7787a9f90111fc3d62c1231976c2d37372d59e|https://github.com/ibmruntimes/semeru27-binaries/releases/download/jdk-27.0.0.0/ibm-semeru-open-jre_x64_linux_27.0.0.0.tar.gz
-open|27|jre|ppc64le|27.0.0.0|3c5999fb05f2b68ea1859e898b326718466611b60e7942e02c4defedba88c228|https://github.com/ibmruntimes/semeru27-binaries/releases/download/jdk-27.0.0.0/ibm-semeru-open-jre_ppc64le_linux_27.0.0.0.tar.gz
-open|27|jre|s390x|27.0.0.0|58a2e761384cdf2050fd48bc31521b5e2b8ddb98415523b175ae7be3ed3e5736|https://github.com/ibmruntimes/semeru27-binaries/releases/download/jdk-27.0.0.0/ibm-semeru-open-jre_s390x_linux_27.0.0.0.tar.gz
-open|27|jre|aarch64|27.0.0.0|988cb758c25c0739daf53fd5665f684c1ff0fbf138d1e0f0827208b07aa0ab64|https://github.com/ibmruntimes/semeru27-binaries/releases/download/jdk-27.0.0.0/ibm-semeru-open-jre_aarch64_linux_27.0.0.0.tar.gz
+open|27|jre|x64|27.0.1.0|484ca80a21a1e967889c39d66c1b8dac518ca08070d6e1a2829e3411df4c36f1|https://github.com/ibmruntimes/semeru27-binaries/releases/download/jdk-27.0.1.0/ibm-semeru-open-jre_x64_linux_27.0.1.0.tar.gz
+open|27|jre|ppc64le|27.0.1.0|c511121ef6681267fbca51fc55ded00b7694469577c49e1b5543678005d00abf|https://github.com/ibmruntimes/semeru27-binaries/releases/download/jdk-27.0.1.0/ibm-semeru-open-jre_ppc64le_linux_27.0.1.0.tar.gz
+open|27|jre|s390x|27.0.1.0|e728578553e364f7d05db4b683036c074eb860da16eae67a83c30af951b72e82|https://github.com/ibmruntimes/semeru27-binaries/releases/download/jdk-27.0.1.0/ibm-semeru-open-jre_s390x_linux_27.0.1.0.tar.gz
+open|27|jre|aarch64|27.0.1.0|23f14a25718282b60701321af669eb800866b91fb84d537695ba3c0f53807f22|https://github.com/ibmruntimes/semeru27-binaries/releases/download/jdk-27.0.1.0/ibm-semeru-open-jre_aarch64_linux_27.0.1.0.tar.gz
 
 # Java 27 JDK Open Edition
-open|27|jdk|x64|27.0.0.0|83cb93452d979d5810b2f672d3494b5e33ab0333a2b3a2cbb346337d81d7de01|https://github.com/ibmruntimes/semeru27-binaries/releases/download/jdk-27.0.0.0/ibm-semeru-open-jdk_x64_linux_27.0.0.0.tar.gz
-open|27|jdk|ppc64le|27.0.0.0|ad39df802315422a5fb1651f06bbc2fa9a72fcf70004406469cbdffa10ba2e37|https://github.com/ibmruntimes/semeru27-binaries/releases/download/jdk-27.0.0.0/ibm-semeru-open-jdk_ppc64le_linux_27.0.0.0.tar.gz
-open|27|jdk|s390x|27.0.0.0|c004e096ba592d5965e64ab03f0b2839c4217d3b9eab8dc0f2ebf994f53f0ebd|https://github.com/ibmruntimes/semeru27-binaries/releases/download/jdk-27.0.0.0/ibm-semeru-open-jdk_s390x_linux_27.0.0.0.tar.gz
-open|27|jdk|aarch64|27.0.0.0|e3ec84ceb4404487874ce21432679f8c51aa832ff42251e521d0de7aca237de4|https://github.com/ibmruntimes/semeru27-binaries/releases/download/jdk-27.0.0.0/ibm-semeru-open-jdk_aarch64_linux_27.0.0.0.tar.gz
+open|27|jdk|x64|27.0.1.0|2fbccd11bf2da7e3ae57d89f840eee89c7f8d9e1f8e7a7f3c345a228856e8eb8|https://github.com/ibmruntimes/semeru27-binaries/releases/download/jdk-27.0.1.0/ibm-semeru-open-jdk_x64_linux_27.0.1.0.tar.gz
+open|27|jdk|ppc64le|27.0.1.0|5e642aabfddd77549ce0b42cd651d9a190dceda621a684a757b4209586637130|https://github.com/ibmruntimes/semeru27-binaries/releases/download/jdk-27.0.1.0/ibm-semeru-open-jdk_ppc64le_linux_27.0.1.0.tar.gz
+open|27|jdk|s390x|27.0.1.0|064e70073e14822e9cbe0b30a6a89e58f4c343b33a3f9fdfed8973537b3419ef|https://github.com/ibmruntimes/semeru27-binaries/releases/download/jdk-27.0.1.0/ibm-semeru-open-jdk_s390x_linux_27.0.1.0.tar.gz
+open|27|jdk|aarch64|27.0.1.0|009d9e371f6eb41d5c88bed7aab0d3e1fdc4d23729565cf4c56a4f500806e4fe|https://github.com/ibmruntimes/semeru27-binaries/releases/download/jdk-27.0.1.0/ibm-semeru-open-jdk_aarch64_linux_27.0.1.0.tar.gz
 
 # Java 11 JRE Certified Edition
 certified|11|jre|x64|11.0.32.15|b80e72fb67606bdefdaed6237f42bb468e998437af653f69f7b2016eccbc5393|https://github.com/ibmruntimes/semeru11-certified-binaries/releases/download/jdk-11.0.32.15/ibm-semeru-certified-jre_x64_linux_11.0.32.15.tar.gz
