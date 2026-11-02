@@ -1,0 +1,255 @@
+From 330f3737866e7d86f9c1aaad966498fccd49de16 Mon Sep 17 00:00:00 2001
+From: Rahil Shah <rahil@ca.ibm.com>
+Date: Sat, 31 Oct 2026 00:42:44 -0400
+Subject: [PATCH 1/1] Backport https://github.com/zlib-ng/zlib-ng/pull/2472
+
+---
+ CMakeLists.txt             | 22 ++++++++++++++++++++--
+ README.md                  |  1 +
+ arch/s390/Makefile.in      |  6 ++++++
+ arch/s390/dfltcc_common.c  | 34 ++++++++++++++++++++++++++++++++++
+ arch/s390/dfltcc_common.h  | 11 +++++++++++
+ arch/s390/dfltcc_deflate.c |  3 +++
+ arch/s390/dfltcc_inflate.c |  3 +++
+ configure                  | 36 ++++++++++++++++++++++++++++++++++++
+ 8 files changed, 114 insertions(+), 2 deletions(-)
+ create mode 100644 arch/s390/dfltcc_common.c
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index b97c2021..29f3e256 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -113,8 +113,9 @@ elseif(BASEARCH_PPC_FOUND)
+ elseif(BASEARCH_RISCV_FOUND)
+     option(WITH_RVV "Build with RVV intrinsics" ON)
+ elseif(BASEARCH_S360_FOUND)
+-    option(WITH_DFLTCC_DEFLATE "Build with DFLTCC intrinsics for compression on IBM Z" OFF)
+-    option(WITH_DFLTCC_INFLATE "Build with DFLTCC intrinsics for decompression on IBM Z" OFF)
++    option(WITH_DFLTCC_DEFLATE "Build with DFLTCC intrinsics for compression on IBM Z" ON)
++    option(WITH_DFLTCC_INFLATE "Build with DFLTCC intrinsics for decompression on IBM Z" ON)
++    option(WITH_DFLTCC_ENV "Enable runtime DFLTCC enable/disable via the DFLTCC environment variable" ON)
+     option(WITH_CRC32_VX "Build with vectorized CRC32 on IBM Z" ON)
+ elseif(BASEARCH_X86_FOUND)
+     option(WITH_SSE2 "Build with SSE2" ON)
+@@ -863,6 +864,23 @@ if(WITH_OPTIM)
+             add_definitions(-DS390_DFLTCC_INFLATE)
+             list(APPEND ZLIB_ARCH_SRCS ${ARCHDIR}/dfltcc_inflate.c)
+         endif()
++        if(WITH_DFLTCC_DEFLATE OR WITH_DFLTCC_INFLATE)
++            list(APPEND ZLIB_ARCH_SRCS ${ARCHDIR}/dfltcc_common.c)
++            if(WITH_DFLTCC_ENV)
++                set_property(SOURCE ${ARCHDIR}/dfltcc_common.c APPEND
++                             PROPERTY COMPILE_DEFINITIONS DFLTCC_ENV)
++                # glibc requires _GNU_SOURCE; musl exposes it without but ignores the macro harmlessly
++                set(CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
++                set(CMAKE_REQUIRED_FLAGS -Werror=implicit-function-declaration)
++                check_symbol_exists(secure_getenv "stdlib.h" HAVE_SECURE_GETENV)
++                set(CMAKE_REQUIRED_DEFINITIONS)
++                set(CMAKE_REQUIRED_FLAGS)
++                if(HAVE_SECURE_GETENV)
++                    set_property(SOURCE ${ARCHDIR}/dfltcc_common.c APPEND
++                                 PROPERTY COMPILE_DEFINITIONS HAVE_SECURE_GETENV)
++                endif()
++            endif()
++        endif()
+         if(WITH_CRC32_VX)
+             check_vgfma_intrinsics()
+             if(HAVE_VGFMA_INTRIN)
+diff --git a/README.md b/README.md
+index 28aad7f1..f19935bc 100644
+--- a/README.md
++++ b/README.md
+@@ -213,6 +213,7 @@ Advanced Build Options
+ | WITH_CRC32_VX                   | --without-crc32-vx    | Build with vectorized CRC32 on IBM Z                                | ON                     |
+ | WITH_DFLTCC_DEFLATE             | --with-dfltcc-deflate | Build with DFLTCC intrinsics for compression on IBM Z               | OFF                    |
+ | WITH_DFLTCC_INFLATE             | --with-dfltcc-inflate | Build with DFLTCC intrinsics for decompression on IBM Z             | OFF                    |
++| WITH_DFLTCC_ENV                 | --with_dfltcc_env     | Build to enable DFLTCC environment variation to disable DFLTCC on IBM Z | OFF                  |
+ | WITH_INFLATE_STRICT             |                       | Build with strict inflate distance checking                         | OFF                    |
+ | WITH_INFLATE_ALLOW_INVALID_DIST |                       | Build with zero fill for inflate invalid distances                  | OFF                    |
+ | INSTALL_UTILS                   |                       | Copy minigzip and minideflate during install                        | OFF                    |
+diff --git a/arch/s390/Makefile.in b/arch/s390/Makefile.in
+index e994157d..9603469d 100644
+--- a/arch/s390/Makefile.in
++++ b/arch/s390/Makefile.in
+@@ -32,6 +32,12 @@ dfltcc_inflate.o:
+ dfltcc_inflate.lo:
+ 	$(CC) $(SFLAGS) $(INCLUDES) -c -o $@ $(SRCDIR)/dfltcc_inflate.c
+ 
++dfltcc_common.o:
++	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $(SRCDIR)/dfltcc_common.c
++
++dfltcc_common.lo:
++	$(CC) $(SFLAGS) $(INCLUDES) -c -o $@ $(SRCDIR)/dfltcc_common.c
++
+ crc32-vx.o:
+ 	$(CC) $(CFLAGS) $(VGFMAFLAG) $(NOLTOFLAG) $(INCLUDES) -c -o $@ $(SRCDIR)/crc32-vx.c
+ 
+diff --git a/arch/s390/dfltcc_common.c b/arch/s390/dfltcc_common.c
+new file mode 100644
+index 00000000..77e005c5
+--- /dev/null
++++ b/arch/s390/dfltcc_common.c
+@@ -0,0 +1,34 @@
++/* dfltcc_common.c - Runtime control for IBM Z DFLTCC acceleration.
++ * For conditions of distribution and use, see copyright notice in zlib.h
++ */
++
++#ifdef HAVE_SECURE_GETENV
++#  ifndef _GNU_SOURCE
++#    define _GNU_SOURCE
++#  endif
++#endif
++
++#include "zbuild.h"
++#include "dfltcc_common.h"
++
++#include <stdlib.h>
++#include <string.h>
++
++int Z_INTERNAL PREFIX(dfltcc_enabled) = DFLTCC_ENABLED;
++
++#ifdef DFLTCC_ENV
++static void __attribute__((constructor)) dfltcc_init_env(void) {
++    const char *value;
++
++#  ifdef HAVE_SECURE_GETENV
++    value = secure_getenv("DFLTCC");
++#  else
++    value = getenv("DFLTCC");
++#  endif
++
++    if (value == NULL)
++        PREFIX(dfltcc_enabled) = DFLTCC_ENABLED;
++    else
++        PREFIX(dfltcc_enabled) = strcmp(value, "0") != 0;
++}
++#endif
+\ No newline at end of file
+diff --git a/arch/s390/dfltcc_common.h b/arch/s390/dfltcc_common.h
+index a6527ab5..9113ff3b 100644
+--- a/arch/s390/dfltcc_common.h
++++ b/arch/s390/dfltcc_common.h
+@@ -3,6 +3,17 @@
+ 
+ #include "zutil.h"
+ 
++/*
++  control usage of DFLTCC
++
++  env variable: DFLTCC
++  unset or unreadable: use default (DFLTCC_ENABLED)
++  0: disable DFLTCC
++  1 or any other value: enable DFLTCC
++ */
++extern int Z_INTERNAL PREFIX(dfltcc_enabled);
++#define DFLTCC_ENABLED 1
++
+ /*
+    Parameter Block for Query Available Functions.
+  */
+diff --git a/arch/s390/dfltcc_deflate.c b/arch/s390/dfltcc_deflate.c
+index 90b4b96e..035c52a5 100644
+--- a/arch/s390/dfltcc_deflate.c
++++ b/arch/s390/dfltcc_deflate.c
+@@ -37,6 +37,9 @@ static inline int dfltcc_can_deflate_with_params(PREFIX3(streamp) strm, int leve
+     deflate_state *state = (deflate_state *)strm->state;
+     arch_deflate_state *dfltcc_state = &state->arch;
+ 
++    if (!PREFIX(dfltcc_enabled))
++        return 0;
++
+     /* Unsupported compression settings */
+     if ((dfltcc_state->level_mask & (1 << level)) == 0)
+         return 0;
+diff --git a/arch/s390/dfltcc_inflate.c b/arch/s390/dfltcc_inflate.c
+index cc3cb397..5a5c9cd9 100644
+--- a/arch/s390/dfltcc_inflate.c
++++ b/arch/s390/dfltcc_inflate.c
+@@ -30,6 +30,9 @@ int Z_INTERNAL PREFIX(dfltcc_can_inflate)(PREFIX3(streamp) strm) {
+     struct inflate_state *state = (struct inflate_state *)strm->state;
+     struct dfltcc_state *dfltcc_state = &state->arch.common;
+ 
++    if (!PREFIX(dfltcc_enabled))
++        return 0;
++
+     /* Unsupported hardware */
+     return is_bit_set(dfltcc_state->af.fns, DFLTCC_XPND) && is_bit_set(dfltcc_state->af.fmts, DFLTCC_FMT0);
+ }
+diff --git a/configure b/configure
+index 5cd8163a..ba858678 100755
+--- a/configure
++++ b/configure
+@@ -100,6 +100,7 @@ buildpower9=1
+ buildneon=1
+ builddfltccdeflate=0
+ builddfltccinflate=0
++builddfltccenv=0
+ buildcrc32vx=1
+ floatabi=
+ forcesse2=0
+@@ -173,6 +174,7 @@ case "$1" in
+       echo '    [--without-power8]          Compiles without Power8 instruction set' | tee -a configure.log
+       echo '    [--with-dfltcc-deflate]     Use DEFLATE CONVERSION CALL instruction for compression on IBM Z' | tee -a configure.log
+       echo '    [--with-dfltcc-inflate]     Use DEFLATE CONVERSION CALL instruction for decompression on IBM Z' | tee -a configure.log
++      echo '    [--with-dfltcc-env]         Enable runtime DFLTCC enable/disable via the DFLTCC environment variable' | tee -a configure.log
+       echo '    [--without-crc32-vx]        Build without vectorized CRC32 on IBM Z' | tee -a configure.log
+       echo '    [--with-reduced-mem]        Reduced memory usage for special cases (reduces performance)' | tee -a configure.log
+       echo '    [--force-sse2]              Assume SSE2 instructions are always available (disabled by default on x86, enabled on x86_64)' | tee -a configure.log
+@@ -206,6 +208,7 @@ case "$1" in
+     --without-power9) buildpower9=0 ; shift ;;
+     --with-dfltcc-deflate) builddfltccdeflate=1; shift ;;
+     --with-dfltcc-inflate) builddfltccinflate=1; shift ;;
++    --with-dfltcc-env) builddfltccenv=1; shift ;;
+     --without-crc32-vx) buildcrc32vx=0; shift ;;
+     --with-reduced-mem) reducedmem=1; shift ;;
+     --force-sse2) forcesse2=1; shift ;;
+@@ -1420,6 +1423,24 @@ EOF
+     fi
+ }
+ 
++check_secure_getenv() {
++    cat > $test.c << EOF
++#include <stdlib.h>
++int main(void) { return secure_getenv("TEST") == 0; }
++EOF
++    printf "Checking for secure_getenv... " | tee -a configure.log
++    if try $CC $CFLAGS -Werror=implicit-function-declaration -o $test $test.c $LDSHAREDLIBC; then
++        HAVE_SECURE_GETENV=1
++        echo "Yes." | tee -a configure.log
++    elif try $CC $CFLAGS -D_GNU_SOURCE -Werror=implicit-function-declaration -o $test $test.c $LDSHAREDLIBC; then
++        HAVE_SECURE_GETENV=1
++        echo "Yes (with _GNU_SOURCE)." | tee -a configure.log
++    else
++        HAVE_SECURE_GETENV=0
++        echo "No." | tee -a configure.log
++    fi
++}
++
+ check_sse42_intrinsics() {
+     # Check whether compiler supports SSE4.2 intrinsics
+     cat > $test.c << EOF
+@@ -1875,6 +1896,21 @@ EOF
+                 ARCH="${ARCH}+dfltcc-inflate"
+             fi
+ 
++            if test $builddfltccinflate -eq 1 -o $builddfltccdeflate -eq 1; then
++                ARCH_STATIC_OBJS="${ARCH_STATIC_OBJS} dfltcc_common.o"
++                ARCH_SHARED_OBJS="${ARCH_SHARED_OBJS} dfltcc_common.lo"
++                if test $builddfltccenv -eq 1; then
++                    CFLAGS="${CFLAGS} -DDFLTCC_ENV"
++                    SFLAGS="${SFLAGS} -DDFLTCC_ENV"
++                    ARCH="${ARCH}+dfltcc-env"
++                    check_secure_getenv
++                    if test $HAVE_SECURE_GETENV -eq 1; then
++                        CFLAGS="${CFLAGS} -DHAVE_SECURE_GETENV"
++                        SFLAGS="${SFLAGS} -DHAVE_SECURE_GETENV"
++                    fi
++                fi
++            fi
++
+             if test $buildcrc32vx -eq 1; then
+                 check_vgfma_intrinsics
+                 if test $HAVE_VGFMA_INTRIN -eq 1; then
+-- 
+2.54.0 (Apple Git-157)
+
