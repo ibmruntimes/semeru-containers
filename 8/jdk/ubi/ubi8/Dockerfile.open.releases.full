@@ -22,33 +22,33 @@ RUN dnf install -y tzdata openssl curl ca-certificates fontconfig glibc-langpack
 
 LABEL name="IBM Semeru Runtime Open Edition" \
       vendor="International Business Machines Corporation" \
-      version="8.0.504.5" \
+      version="8.0.512.0" \
       release="8" \
       maintainer="jayasg12@in.ibm.com" \
       run="docker run --rm -ti <image_name:tag> /bin/bash" \
       summary="IBM Semeru Runtime Docker Image for OpenJDK with openj9 and ubi" \
       description="For more information on this image please see https://github.com/ibmruntimes/semeru-containers/blob/master/README.md"
 
-ENV JAVA_VERSION 8.0.504.5
+ENV JAVA_VERSION 8.0.512.0
 
 RUN set -eux; \
     ARCH="$(uname -m)"; \
     case "${ARCH}" in \
        aarch64|arm64) \
-         ESUM='08332a27351b86b0ad7005da9f219df3fec901a6376a5a851adf005756f9cb98'; \
-         BINARY_URL='https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk-8.0.504.5/ibm-semeru-open-jdk_aarch64_linux_8.0.504.5.tar.gz'; \
+         ESUM='2090ee80f0a05889c62dae44c0479687bff9ad606ead0e367cde496c9ffcadb2'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk-8.0.512.0/ibm-semeru-open-jdk_aarch64_linux_8.0.512.0.tar.gz'; \
          ;; \
        ppc64el|ppc64le) \
-         ESUM='e8aa32a66649ed1e7d6c3096645c9364d6ba8dc68180c2b9b70d10c0b44497d4'; \
-         BINARY_URL='https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk-8.0.504.5/ibm-semeru-open-jdk_ppc64le_linux_8.0.504.5.tar.gz'; \
+         ESUM='056992c8edf194aeba74e2a1d5e1bd4d259e3b822b13a229dbad4d41774854cf'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk-8.0.512.0/ibm-semeru-open-jdk_ppc64le_linux_8.0.512.0.tar.gz'; \
          ;; \
        amd64|x86_64) \
-         ESUM='212b7d085e5deacaeb455d661c1205b38d1751e194c3355dd90214cf7fb177d5'; \
-         BINARY_URL='https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk-8.0.504.5/ibm-semeru-open-jdk_x64_linux_8.0.504.5.tar.gz'; \
+         ESUM='bd45587130f56feb746056e30d1fa1ebe5dd0ef44ec7b496e8aa072201981f8e'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk-8.0.512.0/ibm-semeru-open-jdk_x64_linux_8.0.512.0.tar.gz'; \
          ;; \
        s390x) \
-         ESUM='3a75653a29e219406d4cef97f243f1696961e20861a2ee630968f3dc05d2a8ce'; \
-         BINARY_URL='https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk-8.0.504.5/ibm-semeru-open-jdk_s390x_linux_8.0.504.5.tar.gz'; \
+         ESUM='4d428ebd9f81c26d1094e1be7ed30fb6f114a8d2ee1b06ab66fdb1e842827e6a'; \
+         BINARY_URL='https://github.com/ibmruntimes/semeru8-binaries/releases/download/jdk-8.0.512.0/ibm-semeru-open-jdk_s390x_linux_8.0.512.0.tar.gz'; \
          ;; \
        *) \
          echo "Unsupported arch: ${ARCH}"; \
