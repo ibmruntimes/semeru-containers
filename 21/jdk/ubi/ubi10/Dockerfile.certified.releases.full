@@ -13,6 +13,88 @@
 # limitations under the License.
 #
 
+FROM registry.access.redhat.com/ubi10/ubi:latest AS zlib-builder
+
+# The distro spec has BuildRequires on cmake(GTest) and libabigail, which are not in the
+# UBI10 repositories, so "dnf builddep" cannot be used. The tools the spec needs are
+# installed explicitly, and rpmbuild is run with --nodeps and --nocheck (%check needs
+# libabigail). gtest is turned off further down.
+RUN dnf install -y \
+        gcc gcc-c++ make cmake cmake-rpm-macros \
+        rpm-build redhat-rpm-config \
+        dnf-plugins-core \
+        patch \
+    && dnf clean all
+
+# Enable source repos and fetch the zlib-ng SRPM
+RUN dnf config-manager --enable '*source*' 2>/dev/null || true && \
+    dnf download --source zlib-ng -y --destdir /tmp && \
+    rpm -ivh /tmp/zlib-ng-*.src.rpm --define "_topdir /build/rpmbuild" && \
+    rm -f /tmp/zlib-ng-*.src.rpm
+
+# Prepare source tree via %prep (applies the distro's own patches)
+RUN rpmbuild -bp --nodeps \
+        --define "_topdir /build/rpmbuild" \
+        /build/rpmbuild/SPECS/zlib-ng.spec
+
+# gtest is not available in UBI10; do not build the gtest tests.
+RUN sed -i 's/^%global cmake_param .*-DWITH_RVV=OFF$/& -DWITH_GTEST=OFF/' /build/rpmbuild/SPECS/zlib-ng.spec && \
+    grep -q -- '-DWITH_GTEST=OFF' /build/rpmbuild/SPECS/zlib-ng.spec
+
+# Copy and apply custom patch (backport of https://github.com/zlib-ng/zlib-ng/pull/2472)
+COPY zlib-ng-dfltcc-env.patch /tmp/zlib-ng-dfltcc-env.patch
+RUN CONFIGURE=$(find /build/rpmbuild/BUILD -maxdepth 3 -path '*/zlib-ng-*' -name configure | head -1) && \
+    test -n "${CONFIGURE}" && \
+    SRC_DIR=$(dirname "${CONFIGURE}") && \
+    patch -d "${SRC_DIR}" -p1 < /tmp/zlib-ng-dfltcc-env.patch && \
+    rm -f /tmp/zlib-ng-dfltcc-env.patch
+
+# Compile, stage, and package RPMs
+RUN rpmbuild -bc --short-circuit --nodeps \
+        --define "_topdir /build/rpmbuild" \
+        --nocheck \
+        /build/rpmbuild/SPECS/zlib-ng.spec && \
+    rm -rf /build/rpmbuild/BUILDROOT && \
+    rpmbuild -bi --short-circuit --nodeps \
+        --define "_topdir /build/rpmbuild" \
+        --nocheck \
+        /build/rpmbuild/SPECS/zlib-ng.spec && \
+    rpmbuild -bb --short-circuit --nodeps \
+        --define "_topdir /build/rpmbuild" \
+        --nocheck \
+        /build/rpmbuild/SPECS/zlib-ng.spec
+
+FROM registry.access.redhat.com/ubi10/ubi:latest AS zlib-extractor
+
+RUN dnf install -y cpio && dnf clean all
+
+# Unpack only the zlib-compatible runtime library (libz.so.1), not the -devel/-static
+# packages, so the patched library stays isolated from the system zlib-ng.
+RUN mkdir -p /opt/zlib-ng
+COPY --from=zlib-builder /build/rpmbuild/RPMS /tmp/rpms
+RUN cd /opt/zlib-ng && \
+    for rpmfile in $(find /tmp/rpms -name 'zlib-ng-compat-[0-9]*.rpm'); do \
+        echo "Extracting $rpmfile to /opt/zlib-ng..."; \
+        rpm2cpio "$rpmfile" | cpio -idmv; \
+    done && \
+    test -e /opt/zlib-ng/usr/lib64/libz.so.1 && \
+    rm -rf /tmp/rpms
+
+# Download standalone patchelf binary
+RUN set -eux; \
+    ARCH="$(uname -m)"; \
+    case "${ARCH}" in \
+        amd64|x86_64) PATCHELF_ARCH="x86_64" ;; \
+        aarch64|arm64) PATCHELF_ARCH="aarch64" ;; \
+        ppc64el|ppc64le) PATCHELF_ARCH="ppc64le" ;; \
+        s390x) PATCHELF_ARCH="s390x" ;; \
+        *) echo "Unsupported arch for patchelf: ${ARCH}"; exit 1 ;; \
+    esac; \
+    curl -LfsSo /tmp/patchelf.tar.gz "https://github.com/NixOS/patchelf/releases/download/0.18.0/patchelf-0.18.0-${PATCHELF_ARCH}.tar.gz"; \
+    mkdir -p /opt/patchelf; \
+    tar --no-same-owner --no-same-permissions -xf /tmp/patchelf.tar.gz -C /opt/patchelf; \
+    rm -f /tmp/patchelf.tar.gz
+
 FROM registry.access.redhat.com/ubi10/ubi:latest AS base-image
 
 ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
@@ -111,6 +193,26 @@ RUN --mount=type=secret,id=criu_secrets source /run/secrets/criu_secrets; \
     mv /opt/ibm/jdk-21* /opt/ibm/java; \
     cp /opt/ibm/java/legal/java.base/license/license_en.txt /licenses; \
     rm -rf /tmp/openjdk.tar.gz;
+
+# Copy patched zlib-ng and patchelf
+COPY --from=zlib-extractor /opt/zlib-ng /opt/zlib-ng
+COPY --from=zlib-extractor /opt/patchelf/bin/patchelf /usr/local/bin/patchelf
+
+# Point every Semeru ELF file that depends on libz.so.1 at /opt/zlib-ng.
+# /opt/zlib-ng/usr/lib64 is put first in DT_RUNPATH; any existing entries are kept.
+RUN set -eux; \
+    patched=0; \
+    for f in $(find /opt/ibm/java -type f); do \
+        needed="$(patchelf --print-needed "$f" 2>/dev/null)" || continue; \
+        echo "${needed}" | grep -qx 'libz.so.1' || continue; \
+        cur="$(patchelf --print-rpath "$f")"; \
+        patchelf --set-rpath "/opt/zlib-ng/usr/lib64${cur:+:${cur}}" "$f"; \
+        ldd "$f" | grep -q '/opt/zlib-ng/usr/lib64/libz.so.1'; \
+        echo "patched: $f (rpath: $(patchelf --print-rpath "$f"))"; \
+        patched=$((patched + 1)); \
+    done; \
+    [ "${patched}" -gt 0 ]; \
+    rm -f /usr/local/bin/patchelf;
 
 ENV JAVA_HOME=/opt/ibm/java \
     PATH="/opt/ibm/java/bin:$PATH"
